@@ -13,6 +13,8 @@ the bootloader.
 
 SHA-256: `64936f097a61f03c16f14de127b77c9d5284494465082baee28c3a943f065df1`
 
+💬 **Support, questions and test reports:** [XDA thread](https://xdaforums.com/t/tool-unbrick-autoflash-beta-metroidflasher-unbrick-custom-rom-gapps-from-the-plain-bootloader.4808789/)
+
 Release page: [v0.2.0-beta](https://github.com/AtoZ0to90to9AtoZ/MetroidFlasher-releases/releases/tag/v0.2.0-beta)
 
 ## Status
