@@ -1,15 +1,23 @@
-﻿# MetroidFlasher
+# MetroidFlasher
 
 Bootloader-only flashing tool for the **Nothing Phone (3)** (`metroid`) on Windows.
 
-Flashes stock Nothing OS, custom ROMs, and ROM + GApps **from the plain bootloader** â€”
+Flashes stock Nothing OS, custom ROMs, and ROM + GApps **from the plain bootloader** —
 no fastbootd or working recovery needed. It writes the dynamic `super` partition piece by
 piece straight from the bootloader, so it can also bring back a phone that only boots to
 the bootloader.
 
+## ⬇️ Download
+
+**[MetroidFlasher 0.2.0 beta — download the zip](https://github.com/AtoZ0to90to9AtoZ/MetroidFlasher-releases/releases/download/v0.2.0-beta/MetroidFlasher-0.2.0-beta.zip)** (19 MB, Windows)
+
+SHA-256: `64936f097a61f03c16f14de127b77c9d5284494465082baee28c3a943f065df1`
+
+Release page: [v0.2.0-beta](https://github.com/AtoZ0to90to9AtoZ/MetroidFlasher-releases/releases/tag/v0.2.0-beta)
+
 ## Status
 
-**Beta â€” coming soon.** Downloads will appear under [Releases](../../releases) only.
+**Beta.** Downloads only from this repo's Releases.
 Do not use re-uploads or modified copies: the tool checks its own files and refuses to
 flash if they were changed.
 
@@ -17,7 +25,7 @@ flash if they were changed.
 
 1. Unbrick / install stock Nothing OS
 2. Flash a custom ROM
-3. Flash ROM + GApps (NikGapps basic or omni, or MindTheGapps) â€” removes the ROM apps
+3. Flash ROM + GApps (NikGapps basic or omni, or MindTheGapps) — removes the ROM apps
    your GApps duplicate before first boot, handles verity and the wipe
 4. Check your downloaded files (SHA-256)
 
