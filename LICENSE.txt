@@ -1,0 +1,24 @@
+MetroidFlasher
+Copyright (c) 2026 AtoZ0to90to9AtoZ. All rights reserved.
+
+You may download MetroidFlasher from the official release page and use it, free of charge,
+on devices you own or are allowed to modify.
+
+You may NOT, without written permission from the copyright holder:
+  - copy, re-upload, mirror or redistribute MetroidFlasher or any part of it;
+  - modify, decompile, disassemble or reverse engineer it, or create derived works from it;
+  - remove or change this notice, the name, or the built-in file checks;
+  - sell it, bundle it, or use it in a paid service.
+
+Linking to the official release page is welcome.
+
+NO WARRANTY. MetroidFlasher is provided "as is", without warranty of any kind. Flashing can
+erase data and can damage or brick a device. You use it entirely at your own risk. In no event
+shall the copyright holder be liable for any claim, damages or other liability arising from the
+use of, or inability to use, this software.
+
+Not affiliated with, endorsed by or sponsored by Nothing Technology Limited.
+
+Third-party components keep their own licenses:
+  - Android SDK platform-tools (Google): tool\platform-tools\NOTICE.txt
+  - 7-Zip (Igor Pavlov), GNU LGPL: tool\7zip\License.txt
