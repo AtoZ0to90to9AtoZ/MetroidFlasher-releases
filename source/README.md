@@ -17,7 +17,9 @@ same run, so the phone boots rooted. The tool checks it matches the ROM and neve
 
 ## Folders
 
-Put your files next to `MetroidFlasher.exe`, in the numbered folders. Only fill the ones you need.
+Put your files next to `MetroidFlasher.exe`, in the numbered folders, or use **Choose folder...** next to a job
+to use a folder you already have (no copying; remembered). Only fill the ones you need. New files show up by
+themselves.
 
 | Folder | What goes in it |
 |---|---|

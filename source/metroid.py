@@ -23,7 +23,7 @@ import debloatzip
 import gapps
 import metroid_flasher
 
-APP_VERSION = "1.0.1"
+APP_VERSION = "1.0.2"
 TITLE = f"MetroidFlasher {APP_VERSION}  -  Nothing Phone (3)"
 
 try:
@@ -54,6 +54,49 @@ WORK = os.path.join(D_TOOL, "work")
 EXE = ".exe" if os.name == "nt" else ""
 FASTBOOT = os.path.join(D_TOOL, "platform-tools", "fastboot" + EXE)
 ADB = os.path.join(D_TOOL, "platform-tools", "adb" + EXE)
+DEFAULT_DIRS = {"stock": D_STOCK, "rom": D_ROM, "gapps": D_GAPPS}
+FOLDERS_FILE = os.path.join(WORK, "folders.json")
+
+
+def set_folder(kind, path):
+    """Use another folder for stock / rom / gapps (remembered). An empty path goes back to the default."""
+    global D_STOCK, D_ROM, D_GAPPS
+    import json
+    path = os.path.normpath(path) if path else DEFAULT_DIRS[kind]
+    if kind == "stock":
+        D_STOCK = path
+    elif kind == "rom":
+        D_ROM = path
+    else:
+        D_GAPPS = path
+    chosen = {}
+    try:
+        chosen = json.load(open(FOLDERS_FILE, encoding="utf-8"))
+    except (OSError, ValueError):
+        pass
+    if os.path.normcase(path) == os.path.normcase(DEFAULT_DIRS[kind]):
+        chosen.pop(kind, None)
+    else:
+        chosen[kind] = path
+    try:
+        os.makedirs(WORK, exist_ok=True)
+        json.dump(chosen, open(FOLDERS_FILE, "w", encoding="utf-8"), indent=1)
+    except OSError:
+        pass
+
+
+def load_folders():
+    import json
+    try:
+        chosen = json.load(open(FOLDERS_FILE, encoding="utf-8"))
+    except (OSError, ValueError):
+        return
+    for kind, path in chosen.items():
+        if kind in DEFAULT_DIRS and os.path.isdir(path):
+            set_folder(kind, path)
+
+
+load_folders()
 
 
 # ----------------------------------------------------------------------------- small helpers
@@ -478,7 +521,7 @@ def main():
         os.system("cls" if os.name == "nt" else "clear")
         say("=" * 70)
         say(f"  {TITLE}")
-        say("  BETA - only for the Nothing Phone (3) 'metroid'. You flash at your own risk.")
+        say("  Only for the Nothing Phone (3) 'metroid'. You flash at your own risk.")
         say("=" * 70)
         say("  1  Unbrick / install stock Nothing OS      (uses 1-STOCK)")
         say("  2  Flash a custom ROM                       (uses 2-ROM)")

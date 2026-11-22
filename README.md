@@ -2,14 +2,14 @@
 
 ## Download
 
-**[MetroidFlasher 1.0.1 (zip, Windows, 12 MB)](https://github.com/AtoZ0to90to9AtoZ/MetroidFlasher-releases/releases/download/v1.0.1/MetroidFlasher-1.0.1.zip)**
-· [release page](https://github.com/AtoZ0to90to9AtoZ/MetroidFlasher-releases/releases/tag/v1.0.1)
+**[MetroidFlasher 1.0.2 (zip, Windows, 12 MB)](https://github.com/AtoZ0to90to9AtoZ/MetroidFlasher-releases/releases/download/v1.0.2/MetroidFlasher-1.0.2.zip)**
+· [release page](https://github.com/AtoZ0to90to9AtoZ/MetroidFlasher-releases/releases/tag/v1.0.2)
 · [XDA thread (support and reports)](https://xdaforums.com/t/tool-unbrick-autoflash-beta-metroidflasher-unbrick-custom-rom-gapps-from-the-plain-bootloader.4808789/)
 
 | File | SHA-256 |
 |---|---|
-| `MetroidFlasher-1.0.1.zip` (the tool) | `59f911efc36c5504da3003248f5afe069d85e935996faf91eab4873e714ddd12` |
-| `MetroidFlasher-1.0.1-source.zip` (the source) | `c7ca95c7f6937e2da61eabfda1c370327780f7e9cbe81623abed4bb239f443c5` |
+| `MetroidFlasher-1.0.2.zip` (the tool) | `30de332079b2ccc25a0dfa3bae2a761fe3116ca9a23fd5fc286e9692a7021a42` |
+| `MetroidFlasher-1.0.2-source.zip` (the source) | `554b4caf81e04e6ff6b2c1e0dbb2eaf94ce69513b34616bf52bebbe64f722f1d` |
 
 A Windows flasher for the **Nothing Phone (3)** ("metroid", fastboot product `sun`). It works from the plain
 bootloader screen, so it still works when recovery and fastbootd are broken.
@@ -28,7 +28,9 @@ same run, so the phone boots rooted. The tool checks it matches the ROM and neve
 
 ## Folders
 
-Put your files next to `MetroidFlasher.exe`, in the numbered folders. Only fill the ones you need.
+Put your files next to `MetroidFlasher.exe`, in the numbered folders, or use **Choose folder...** next to a job
+to use a folder you already have (no copying; remembered). Only fill the ones you need. New files show up by
+themselves.
 
 | Folder | What goes in it |
 |---|---|
@@ -130,7 +132,7 @@ checks its own files and refuses to flash with a modified copy.
 
 ## Source
 
-The source is in [`source/`](source) (Python, no outside packages) and as `MetroidFlasher-1.0.1-source.zip` on
+The source is in [`source/`](source) (Python, no outside packages) and as `MetroidFlasher-1.0.2-source.zip` on
 the release page. Run it with `py gui.py`; tests: `py tests/run_tests.py`.
 It's **source-available** (see [LICENSE.txt](LICENSE.txt)): read it, build it, change it for your own use, send
 fixes back. Please don't publish modified builds or present them as MetroidFlasher.

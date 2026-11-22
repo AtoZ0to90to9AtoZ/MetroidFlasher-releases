@@ -51,8 +51,23 @@ if os.name == "nt":
     subprocess.Popen.__init__ = _silent_init
 
 
+PIN_SERIAL = ""   # the Nothing Phone (3) the status panel locked onto; every adb/fastboot command goes to it
+NO_PIN = {"devices", "start-server", "kill-server", "version", "--version", "help", "pair", "connect",
+          "disconnect", "mdns"}
+
+
+def pinned(cmd):
+    """[exe, args...] -> [exe, -s SERIAL, args...] for adb/fastboot, unless -s is already given or the command
+    isn't about one phone. Other phones (a second phone, a phone on wireless adb) are never touched."""
+    if PIN_SERIAL and len(cmd) > 1 and os.path.basename(cmd[0]).lower().removesuffix(".exe") in ("adb", "fastboot") \
+            and "-s" not in cmd[1:] and cmd[1] not in NO_PIN:
+        return [cmd[0], "-s", PIN_SERIAL, *cmd[1:]]
+    return cmd
+
+
 def run_quiet(cmd, timeout=20):
     """Run fastboot/adb with no console window; returns stdout+stderr text ('' on failure)."""
+    cmd = pinned(cmd)
     try:
         r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout,
                            creationflags=NO_WINDOW, errors="replace")
@@ -93,15 +108,23 @@ class PhoneState:
         drop off USB until the cable was replugged (2026-11-18)."""
         s = PhoneState()
         fb = run_quiet([metroid.FASTBOOT, "devices"], 10) if os.path.isfile(metroid.FASTBOOT) else ""
-        if metroid_flasher.has_fastboot_device(fb):
-            s.serial = fb.split()[0]
-            if prev is not None and prev.serial == s.serial and prev.mode in ("fastboot", "fastbootd"):
-                s.mode, s.product, s.slot, s.unlocked, s.critical = prev.mode, prev.product, prev.slot, prev.unlocked, prev.critical
+        fb_serials = [l.split()[0] for l in fb.splitlines() if re.match(r"^\S+\s+fastboot\s*$", l)
+                      and not metroid_flasher.is_network_serial(l.split()[0])]
+        if fb_serials:
+            def g(serial, n):
+                out = run_quiet([metroid.FASTBOOT, "-s", serial, "getvar", n], 15)
+                return (re.search(rf"^{n}:\s*(.*)$", out, re.M) or [None, ""])[1].strip()
+            if prev is not None and prev.serial in fb_serials and prev.mode in ("fastboot", "fastbootd"):
+                s.serial, s.mode, s.product, s.slot, s.unlocked, s.critical = (prev.serial, prev.mode, prev.product,
+                                                                               prev.slot, prev.unlocked, prev.critical)
                 return s
-            g = lambda n: (re.search(rf"^{n}:\s*(.*)$", run_quiet([metroid.FASTBOOT, "getvar", n], 15), re.M) or [None, ""])[1].strip()
-            s.mode = "fastbootd" if g("is-userspace") == "yes" else "fastboot"
-            s.product, s.slot, s.unlocked = g("product"), g("current-slot"), g("unlocked")
-            info = run_quiet([metroid.FASTBOOT, "oem", "device-info"], 15)
+            # the Nothing Phone (3) if one is there, else the first (describe() then says it's the wrong phone)
+            prods = {ser: g(ser, "product") for ser in fb_serials}
+            s.serial = next((ser for ser in fb_serials if prods[ser] == metroid_flasher.EXPECTED_PRODUCT), fb_serials[0])
+            s.product = prods[s.serial]
+            s.mode = "fastbootd" if g(s.serial, "is-userspace") == "yes" else "fastboot"
+            s.slot, s.unlocked = g(s.serial, "current-slot"), g(s.serial, "unlocked")
+            info = run_quiet([metroid.FASTBOOT, "-s", s.serial, "oem", "device-info"], 15)
             s.critical = "yes" if re.search(r"critical unlocked:\s*true", info, re.I) else "no"
             return s
         ad = run_quiet([metroid.ADB, "devices"], 10) if os.path.isfile(metroid.ADB) else ""
@@ -115,14 +138,18 @@ class PhoneState:
             if "\t" not in line or line.startswith("*"):   # skip "List of devices", "* daemon started" lines
                 continue
             p = line.split()
-            if len(p) >= 2:
-                s.serial = p[0]
-                s.mode = {"device": "android", "recovery": "recovery", "sideload": "sideload",
-                          "unauthorized": "unauthorized"}.get(p[1], p[1])
-                if s.mode == "android":
-                    s.product = run_quiet([metroid.ADB, "-s", s.serial, "shell", "getprop", "ro.product.device"], 10).strip()
-                    s.slot = run_quiet([metroid.ADB, "-s", s.serial, "shell", "getprop", "ro.boot.slot_suffix"], 10).strip().lstrip("_")
-                return s
+            if len(p) < 2 or metroid_flasher.is_network_serial(p[0]):
+                continue                                  # wireless adb: never the phone this tool flashes
+            mode = {"device": "android", "recovery": "recovery", "sideload": "sideload",
+                    "unauthorized": "unauthorized"}.get(p[1], p[1])
+            product = slot = ""
+            if mode == "android":
+                product = run_quiet([metroid.ADB, "-s", p[0], "shell", "getprop", "ro.product.device"], 10).strip()
+                if product.lower() not in ("metroid", "sun"):
+                    continue                              # another Android phone on USB: not ours
+                slot = run_quiet([metroid.ADB, "-s", p[0], "shell", "getprop", "ro.boot.slot_suffix"], 10).strip().lstrip("_")
+            s.serial, s.mode, s.product, s.slot = p[0], mode, product, slot
+            return s
         return s
 
     def describe(self):
@@ -205,7 +232,7 @@ class App(tk.Tk):
         top = ttk.Frame(self, padding=(12, 8, 12, 4))
         top.pack(fill="x")
         ttk.Label(top, text=f"MetroidFlasher  -  {metroid.APP_VERSION}", style="Head.TLabel").pack(anchor="center")
-        ttk.Label(top, text="BETA  -  Nothing Phone (3) 'metroid' only. You flash at your own risk.",
+        ttk.Label(top, text="Nothing Phone (3) 'metroid' only. You flash at your own risk.",
                   style="Sub.TLabel").pack(anchor="center")
 
         # phone status
@@ -282,8 +309,11 @@ class App(tk.Tk):
             row.pack(anchor="w", fill="x")
             lab = ttk.Label(row, text=hint, style="Sub.TLabel", wraplength=300, justify="left")
             lab.pack(side="left")
-            ttk.Button(row, text="Open folder", width=11,
-                       command=lambda d=folder if key != "romgapps" else metroid.D_GAPPS: self.open_folder(d)).pack(side="right")
+            kind = {"unbrick": "stock", "rom": "rom", "romgapps": "gapps"}[key]
+            ttk.Button(row, text="Open", width=6,
+                       command=lambda k=kind: self.open_folder(self.folder_of(k))).pack(side="right")
+            ttk.Button(row, text="Choose folder...", width=15,
+                       command=lambda k=kind: self.choose_folder(k)).pack(side="right", padx=(0, 4))
             self.inputs[key] = lab
             if key == "romgapps":
                 pick = ttk.Frame(box)
@@ -303,15 +333,13 @@ class App(tk.Tk):
         ttk.Entry(rb, textvariable=self.root_var, width=24, state="readonly").pack(side="left", padx=4)
         ttk.Button(rb, text="Choose...", command=self.choose_root).pack(side="left")
         ttk.Button(rb, text="Clear", command=lambda: (self.root_var.set(""), self.refresh_inputs())).pack(side="left", padx=4)
-        ttk.Label(f, text="Your rooted init_boot/boot, patched from THIS ROM (checked, never patched here).",
+        ttk.Label(f, text="Pre-rooted init_boot from THIS ROM (checked, never patched here).",
                   style="Sub.TLabel", wraplength=320, justify="left").pack(anchor="w", pady=(2, 0))
         ttk.Separator(f).pack(fill="x", pady=6)
         self.dry_var = tk.BooleanVar(value=True)
         ttk.Checkbutton(f, text="Dry run (check everything, flash nothing)", variable=self.dry_var).pack(anchor="w")
-        ttk.Label(f, text="Every job needs a passing dry run before the real flash is allowed.",
+        ttk.Label(f, text="A passing dry run unlocks the real flash.",
                   style="Sub.TLabel", wraplength=320).pack(anchor="w", pady=(2, 8))
-        ttk.Button(f, text="Refresh folders", command=lambda: (self.refresh_inputs(), self.check_gapps_zips())).pack(anchor="w")
-        ttk.Button(f, text="Check my files (SHA-256)", command=self.hash_check).pack(anchor="w", pady=4)
 
     def _tools_tab(self, nb):
         f = ttk.Frame(nb, padding=10)
@@ -328,12 +356,12 @@ class App(tk.Tk):
                 ttk.Label(box, text=tip, style="Sub.TLabel", anchor="center", justify="center",
                           wraplength=0).pack(fill="x", pady=(4, 4))
 
-        ttk.Label(f, text="adb + fastboot", font=("Segoe UI", 10, "bold")).pack(anchor="w")
-        btn("Use my own platform-tools folder...", self.pick_platform_tools,
-            "Found by itself if it's on PATH or in the usual folders.")
+        ttk.Label(f, text="Files", font=("Segoe UI", 10, "bold")).pack(anchor="w")
+        btn("Check my files (SHA-256)", self.hash_check)
+        btn("Use my own platform-tools folder...", self.pick_platform_tools)
         ttk.Label(f, text="Reboot to", font=("Segoe UI", 10, "bold")).pack(anchor="w")
         btn("Android (system)", lambda: self.reboot(""))
-        btn("Bootloader (fastboot)", lambda: self.reboot("bootloader"), "Where flashing happens.")
+        btn("Bootloader (fastboot)", lambda: self.reboot("bootloader"))
         btn("Recovery", lambda: self.reboot("recovery"))
         btn("fastbootd", lambda: self.reboot("fastboot"))
         ttk.Separator(f).pack(fill="x", pady=8)
@@ -434,12 +462,51 @@ class App(tk.Tk):
                 finally:
                     self.usb.release()
             threading.Thread(target=work, daemon=True).start()
+        self._watch_folders()
         self.after(5000, self._poll)
+
+    def _folder_sig(self, d):
+        """Cheap fingerprint of a folder (names, sizes, dates two levels deep) to notice new files."""
+        sig = []
+        try:
+            for root, dirs, files in os.walk(d):
+                if root[len(d):].count(os.sep) >= 2:
+                    dirs[:] = []
+                for f in files:
+                    try:
+                        st = os.stat(os.path.join(root, f))
+                        sig.append((root, f, st.st_size, int(st.st_mtime)))
+                    except OSError:
+                        pass
+        except OSError:
+            pass
+        return tuple(sorted(sig))
+
+    def _watch_folders(self):
+        """Files copied into (or removed from) the folders show up by themselves - no Refresh needed.
+        A file still being copied changes size every poll, so the GApps check waits until it settles."""
+        if self.busy:
+            return
+        sigs = {k: self._folder_sig(self.folder_of(k)) for k in ("stock", "rom", "gapps")}
+        old = getattr(self, "_sigs", None)
+        self._sigs = sigs
+        if old is None:
+            return
+        if sigs["stock"] != old["stock"] or sigs["rom"] != old["rom"]:
+            self.refresh_inputs()
+        if sigs["gapps"] != old["gapps"]:
+            self._gapps_dirty = True
+            self.refresh_inputs()
+        elif getattr(self, "_gapps_dirty", False):   # unchanged for one poll: copying finished
+            self._gapps_dirty = False
+            self.check_gapps_zips()
 
     def show_phone(self, st):
         if self.busy:
             return
         self.phone = st
+        global PIN_SERIAL
+        PIN_SERIAL = st.serial or ""
         head, lines = st.describe()
         self.phone_head.config(text=head + (f"   ({st.serial})" if st.serial else ""))
         for w in self.phone_lines.winfo_children():
@@ -558,22 +625,22 @@ class App(tk.Tk):
             return len([x for x in os.listdir(d) if x.lower().endswith(".img")]) if d else 0
 
         self.inputs["unbrick"].config(
-            text=f"1-STOCK: {n_img(stock)} images found" if stock else "1-STOCK is empty: put the stock image folder (.img files) there.",
+            text=f"{self.short('stock')}: {n_img(stock)} images found" if stock else f"{self.short('stock')} has no .img files: put the stock images there or Choose folder.",
             style="Sub.TLabel" if stock else "Bad.TLabel")
         self.inputs["rom"].config(
-            text=f"2-ROM: {n_img(rom)} images found" if rom else "2-ROM is empty: put the ROM's .img files there.",
+            text=f"{self.short('rom')}: {n_img(rom)} images found" if rom else f"{self.short('rom')} has no .img files: put the ROM's images there or Choose folder.",
             style="Sub.TLabel" if rom else "Bad.TLabel")
         if not rom:
-            g = "2-ROM is empty."
+            g = "No ROM images yet (see the row above)."
         elif self.gapps_have is None:
-            g = "Checking the GApps zips in 3-GAPPS..."
+            g = f"Checking the GApps zips in {self.short('gapps')}..."
         elif not ok_g:
             ready = [gapps.NAMES[p] for p in gapps.ORDER if self.gapps_have.get(p)]
-            g = (f"3-GAPPS doesn't hold the zip(s) for {gapps.NAMES[pkg]}."
+            g = (f"{self.short('gapps')} doesn't hold the zip(s) for {gapps.NAMES[pkg]}."
                  + (f" Ready: {', '.join(ready)}." if ready else " Put the NikGapps or MindTheGapps zips there."))
         else:
             ready = [gapps.NAMES[p] for p in gapps.ORDER if self.gapps_have.get(p)]
-            g = f"3-GAPPS ready for: {', '.join(ready)}"
+            g = f"{self.short('gapps')} ready for: {', '.join(ready)}"
         self.inputs["romgapps"].config(text=g, style="Sub.TLabel" if rom and ok_g else "Bad.TLabel")
         left = self.customize.get(pkg, [])
         if hasattr(self, "customize_label"):
@@ -701,6 +768,9 @@ class App(tk.Tk):
         row.pack(fill="x", pady=(12, 0))
         ttk.Button(row, text="Flash", command=go).pack(side="right")
         ttk.Button(row, text="Cancel", command=d.destroy).pack(side="right", padx=6)
+        e.bind("<Return>", lambda _ev: go())      # Enter after typing FLASH = the Flash button
+        e.bind("<KP_Enter>", lambda _ev: go())
+        d.bind("<Escape>", lambda _ev: d.destroy())
         e.focus_set()
         self.wait_window(d)
         return res["ok"]
@@ -920,6 +990,25 @@ class App(tk.Tk):
         threading.Thread(target=work, daemon=True).start()
 
     # ---------- misc ----------
+    def folder_of(self, kind):
+        return {"stock": metroid.D_STOCK, "rom": metroid.D_ROM, "gapps": metroid.D_GAPPS}[kind]
+
+    def choose_folder(self, kind):
+        what = {"stock": "the stock Nothing OS image folder (.img files)", "rom": "the ROM's .img files",
+                "gapps": "your GApps zips"}[kind]
+        d = filedialog.askdirectory(title=f"Folder with {what}", initialdir=self.folder_of(kind))
+        if not d:
+            return
+        metroid.set_folder(kind, d)
+        self.say(f"Using {os.path.normpath(d)} for {what}.\n", "good")
+        if kind == "gapps":
+            self.check_gapps_zips()
+        self.refresh_inputs()
+
+    def short(self, kind):
+        d = self.folder_of(kind)
+        return os.path.basename(d) if os.path.normcase(d) == os.path.normcase(metroid.DEFAULT_DIRS[kind]) else d
+
     def open_folder(self, d):
         os.makedirs(d, exist_ok=True)
         if os.name == "nt":

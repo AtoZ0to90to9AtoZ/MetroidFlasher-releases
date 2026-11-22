@@ -27,7 +27,7 @@ import time
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import lpsuper  # noqa: E402
 
-TOOL_VERSION = "1.0.1"
+TOOL_VERSION = "1.0.2"
 EXPECTED_PRODUCT = "sun"
 DEFAULT_SUPER_SIZE = 0x240000000
 GROUP = "qti_dynamic_partitions"
@@ -567,6 +567,23 @@ def build_super(images, layout, meta, super_size, slot, out):
     log(f"  partition table OK ({table['copies']} copies) - super.img sha256 {sha256_file(out)[:16]}...")
 
 
+def recheck_phone(fb, slot):
+    """Right before flashing: the locked phone must still answer in the plain bootloader. If it's gone (cable,
+    reboot, screen timeout on some setups), wait for it to come back - nothing has been written yet."""
+    serial = fb.serial
+    if fb.getvar("product") != EXPECTED_PRODUCT:
+        log("The phone isn't answering in the bootloader any more. Nothing has been flashed yet.")
+        log("Put it back in the bootloader (hold Power + Volume Down) and plug it in; waiting up to 5 minutes...")
+        fb.wait_for_bootloader(seconds=300, want_serial=serial)
+    if fb.getvar("is-userspace") == "yes":
+        raise FlashError("The phone is in fastbootd now. Run `fastboot reboot bootloader` and start again. "
+                         "Nothing has been flashed.")
+    if fb.getvar("product") != EXPECTED_PRODUCT:
+        raise FlashError("The phone stopped answering right before flashing. Nothing has been flashed. "
+                         "Check the cable and start again.")
+    log("Phone check before flashing: still in the bootloader, same phone. Flashing now.")
+
+
 def flash_all(fb, args, plan, images, slot, mode, super_size, layout, workdir):
     """Order proven on the phone 2026-11-20: firmware -> ONE super.img -> boot images -> vbmeta LAST ->
     erase misc -> wipe -> set_active -> reboot. Bootloader only: no fastbootd, recovery or adb."""
@@ -578,6 +595,9 @@ def flash_all(fb, args, plan, images, slot, mode, super_size, layout, workdir):
     lpsuper.parse_metadata_region(meta)
     super_img = os.path.join(workdir, "super.img")
     build_super(images, layout, meta, super_size, slot, super_img)
+    # 0b. building super can take a long time on a slow PC: make sure the SAME phone is still in the plain
+    #     bootloader (not rebooted, not unplugged, not in fastbootd) right before the first write
+    recheck_phone(fb, slot)
     # 1. firmware
     for name in plan["firmware"]:
         for s in ([slot, other] if fw_both else [slot]):

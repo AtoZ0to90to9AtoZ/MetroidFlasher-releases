@@ -1,4 +1,16 @@
-**MetroidFlasher 1.0.1 - Nothing Phone (3) "metroid" only.**
+**MetroidFlasher 1.0.2 - Nothing Phone (3) "metroid" only.**
+
+## New in 1.0.2 (since 1.0.1)
+- **Only ever your Nothing Phone (3).** The phone status panel and every Tools / command-box command now lock
+  onto the Nothing Phone (3) on USB, by serial. Other phones, including ones on wireless adb, are ignored.
+  (1.0.1's status panel could show another phone that was on wireless adb.) Flashing itself was always locked.
+- **Phone check right before flashing.** Building super can take a while on a slow PC; right before the first
+  write the tool checks the same phone is still in the bootloader. If it isn't, it waits for it (nothing has
+  been written yet).
+- **Choose folder...** next to each job: use the folder your files are already in (remembered). New files in
+  the folders show up by themselves; the Refresh button is gone.
+- The Flash tab fits a 1366x768 screen. "Check my files" moved to the Tools tab. No more "BETA" in the header.
+- Typing FLASH and pressing Enter confirms; Esc cancels.
 
 ## New in 1.0.1
 - **Uses your own adb + fastboot if you have them.** Found by itself on PATH, in the Android SDK or the usual
