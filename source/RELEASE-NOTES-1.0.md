@@ -45,10 +45,8 @@
 - Automated tests for the image builder (exact read-back, links, large folders, big files), the package
   catalog, root-image checks and the keep-data rule.
 
-### Known quirks
-- Windows can lose the phone on USB after it reboots into Android. Unplug and replug the cable.
+### Tips
+- If Windows doesn't see the phone after it reboots, unplug and replug the cable (a USB port on the PC, not a hub).
 - After a wipe you'll need to tap **Allow** for USB debugging again.
-- A harmless "Unexpected safety source: AdvancedProtection" background crash may show at first boot with newer
-  Play Services.
 
 SHA-256 of the zip: `[fill in]`

@@ -95,13 +95,11 @@ Start at the top and go down only if the step above can't help.
 If a flash stops partway, the tool tells you where. Nothing after that point was sent and the phone stays in
 the bootloader. Fix the cause and run it again.
 
-## Known quirks
-- **The phone doesn't show up after a reboot.** Windows sometimes loses the phone on USB after it reboots from
-  the bootloader into Android. Unplug and replug the cable. Use a USB port directly on the PC, not a hub.
+## Tips
+- **The phone doesn't show up after a reboot?** Unplug and replug the cable. Use a USB port directly on the PC,
+  not a hub.
 - After a wipe, Android asks you to **Allow USB debugging** for this PC again.
 - Mobile data may start switched off after a wipe. Turn it on in Settings.
-- With newer Google Play Services you may see a background "Unexpected safety source: AdvancedProtection" crash
-  at first boot. It restarts by itself and does no harm.
 
 ## Logs and reports
 Each run writes a log to `tool\work\flash_*.log` (or use **Save log...**). When reporting a problem, post the
