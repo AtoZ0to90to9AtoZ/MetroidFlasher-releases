@@ -89,18 +89,22 @@ Device-unique partitions such as `persist`, `modemst1/2`, `fsg`, `fsc` (IMEI, ra
 `devinfo`, `frp`, `keystore` and `secdata`, even if they're in your folder. It never flashes vbmeta with
 `--disable-verification`.
 
-## If something goes wrong (brick ladder)
+## Rescuing a stuck phone
 
-Start at the top and go down only if the step above can't help.
-1. **Phone boots to recovery or the bootloader, and fastbootd works:** the normal stock `flash_all` from the
-   community stock package can fix it.
+Phone stuck after a bad flash, update or mod (with any tool)? Pick the first line that fits:
+1. **Recovery or fastbootd still works:** the normal stock `flash_all` from the community stock package can
+   fix it.
 2. **Only the bootloader works** (recovery, fastbootd or super are broken): **MetroidFlasher** -> *Unbrick to
    stock Nothing OS*. This is what it was built for.
 3. **Nothing works and the phone shows up as Qualcomm 9008 (EDL):** use Nothing's official tool or service.
    MetroidFlasher does not do EDL.
 
-If a flash stops partway, the tool tells you where. Nothing after that point was sent and the phone stays in
-the bootloader. Fix the cause and run it again.
+## If MetroidFlasher stops
+
+The dry run checks the phone, your files and that everything fits before anything is flashed, so almost every
+problem stops there with nothing sent to the phone. If a real flash stops partway (a cable pulled, for example),
+the tool tells you where; nothing after that point was sent and the phone stays in the bootloader. Fix the cause
+and run it again.
 
 ## Tips
 - After a wipe, Android asks you to **Allow USB debugging** for this PC again.
