@@ -7,7 +7,7 @@ fastbootd or working recovery needed, which are exactly the parts that break whe
 
 **[MetroidFlasher 1.0 (zip, Windows, 12 MB)](https://github.com/AtoZ0to90to9AtoZ/MetroidFlasher-releases/releases/download/v1.0/MetroidFlasher-1.0.zip)**
 
-SHA-256: `fc6a20f71eb81ebd13e3b756f48d59f76f9901b68325298e181b11e7ebc53576`
+SHA-256 (tool zip): `fc6a20f71eb81ebd13e3b756f48d59f76f9901b68325298e181b11e7ebc53576`
 
 Release page: [v1.0](https://github.com/AtoZ0to90to9AtoZ/MetroidFlasher-releases/releases/tag/v1.0) ·
 Support and reports: [XDA thread](https://xdaforums.com/t/tool-unbrick-autoflash-beta-metroidflasher-unbrick-custom-rom-gapps-from-the-plain-bootloader.4808789/)
@@ -29,7 +29,7 @@ Every job erases the phone unless keep data is allowed. Back up first. Needs an 
 ## Source
 
 The source is in [`source/`](source) (Python, no outside packages) and as `MetroidFlasher-1.0-source.zip`
-on the release page. Run it with `py gui.py`; tests: `py tests/run_tests.py`.
+on the release page (SHA-256 `07e0cce9f9fbc92a50604897e206048c86941d49c7587a6aa3306869f5bcc212`). Run it with `py gui.py`; tests: `py tests/run_tests.py`.
 It's **source-available** (see [LICENSE.txt](LICENSE.txt)): read it, build it, change it for your own use,
 send fixes back. Please don't publish modified builds or present them as MetroidFlasher.
 
