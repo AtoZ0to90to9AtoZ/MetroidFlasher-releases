@@ -27,7 +27,7 @@ import time
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import lpsuper  # noqa: E402
 
-TOOL_VERSION = "1.0"
+TOOL_VERSION = "1.0.1"
 EXPECTED_PRODUCT = "sun"
 DEFAULT_SUPER_SIZE = 0x240000000
 GROUP = "qti_dynamic_partitions"

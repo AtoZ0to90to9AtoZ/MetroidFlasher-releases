@@ -5,11 +5,11 @@ fastbootd or working recovery needed, which are exactly the parts that break whe
 
 ## Download
 
-**[MetroidFlasher 1.0 (zip, Windows, 12 MB)](https://github.com/AtoZ0to90to9AtoZ/MetroidFlasher-releases/releases/download/v1.0/MetroidFlasher-1.0.zip)**
+**[MetroidFlasher 1.0.1 (zip, Windows, 12 MB)](https://github.com/AtoZ0to90to9AtoZ/MetroidFlasher-releases/releases/download/v1.0.1/MetroidFlasher-1.0.1.zip)**
 
-SHA-256 (tool zip): `fc6a20f71eb81ebd13e3b756f48d59f76f9901b68325298e181b11e7ebc53576`
+SHA-256 (tool zip): `59f911efc36c5504da3003248f5afe069d85e935996faf91eab4873e714ddd12`
 
-Release page: [v1.0](https://github.com/AtoZ0to90to9AtoZ/MetroidFlasher-releases/releases/tag/v1.0) ·
+Release page: [v1.0.1](https://github.com/AtoZ0to90to9AtoZ/MetroidFlasher-releases/releases/tag/v1.0.1) ·
 Support and reports: [XDA thread](https://xdaforums.com/t/tool-unbrick-autoflash-beta-metroidflasher-unbrick-custom-rom-gapps-from-the-plain-bootloader.4808789/)
 
 ## What it does
@@ -22,14 +22,14 @@ Support and reports: [XDA thread](https://xdaforums.com/t/tool-unbrick-autoflash
     (the most that fits) and **MindTheGapps**. All five were flashed and booted on a real phone.
   - **Customize**: untick apps you don't want. **Root (optional)**: bring your own patched init_boot/boot.
 - Dry run first for every job. adb and fastboot are downloaded from Google on first run (pinned version,
-  checksum checked).
+  checksum checked), unless you already have a recent adb + fastboot: then yours are used.
 
 Every job erases the phone unless keep data is allowed. Back up first. Needs an unlocked bootloader.
 
 ## Source
 
-The source is in [`source/`](source) (Python, no outside packages) and as `MetroidFlasher-1.0-source.zip`
-on the release page (SHA-256 `07e0cce9f9fbc92a50604897e206048c86941d49c7587a6aa3306869f5bcc212`). Run it with `py gui.py`; tests: `py tests/run_tests.py`.
+The source is in [`source/`](source) (Python, no outside packages) and as `MetroidFlasher-1.0.1-source.zip`
+on the release page (SHA-256 `c7ca95c7f6937e2da61eabfda1c370327780f7e9cbe81623abed4bb239f443c5`). Run it with `py gui.py`; tests: `py tests/run_tests.py`.
 It's **source-available** (see [LICENSE.txt](LICENSE.txt)): read it, build it, change it for your own use,
 send fixes back. Please don't publish modified builds or present them as MetroidFlasher.
 

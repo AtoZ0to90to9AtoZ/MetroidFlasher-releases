@@ -183,9 +183,8 @@ class App(tk.Tk):
         self.refresh_inputs()
         self.check_gapps_zips()
         self.say(BANNER, "good")
-        self.say(f"{TITLE}  (BETA)  -  folder: {metroid.ROOT}\n")
-        if not os.path.isfile(metroid.FASTBOOT):
-            self.get_platform_tools()
+        self.say(f"{TITLE}  -  folder: {metroid.ROOT}\n")
+        self.get_platform_tools()
 
     # ---------- look ----------
     def _style(self):
@@ -329,6 +328,9 @@ class App(tk.Tk):
                 ttk.Label(box, text=tip, style="Sub.TLabel", anchor="center", justify="center",
                           wraplength=0).pack(fill="x", pady=(4, 4))
 
+        ttk.Label(f, text="adb + fastboot", font=("Segoe UI", 10, "bold")).pack(anchor="w")
+        btn("Use my own platform-tools folder...", self.pick_platform_tools,
+            "Found by itself if it's on PATH or in the usual folders.")
         ttk.Label(f, text="Reboot to", font=("Segoe UI", 10, "bold")).pack(anchor="w")
         btn("Android (system)", lambda: self.reboot(""))
         btn("Bootloader (fastboot)", lambda: self.reboot("bootloader"), "Where flashing happens.")
@@ -454,13 +456,25 @@ class App(tk.Tk):
     # ---------- inputs ----------
     def get_platform_tools(self):
         """First run: download Google's platform-tools (pinned version, SHA-256 checked) in the background."""
-        self.say("First run: getting Google's adb + fastboot (about 8 MB)...\n", "warn")
+        if os.path.isfile(metroid.FASTBOOT) and os.path.isfile(metroid.ADB):
+            return
 
         def work():
             ok = metroid.ensure_platform_tools(log=lambda m: self.q.put(("log", m + "\n")))
-            msg = "adb + fastboot ready.\n" if ok else "!! Could not download platform-tools - see above.\n"
+            msg = "adb + fastboot ready.\n" if ok else ("!! Could not get platform-tools - see above. Or use "
+                                                         "Tools > Use my own platform-tools folder.\n")
             self.q.put(("call", lambda: self.say(msg, "good" if ok else "bad")))
         threading.Thread(target=work, daemon=True).start()
+
+    def pick_platform_tools(self):
+        d = filedialog.askdirectory(title="Your platform-tools folder (the one with adb.exe and fastboot.exe)")
+        if not d:
+            return
+        why = metroid.set_own_platform_tools(os.path.normpath(d))
+        if why:
+            messagebox.showerror(TITLE, f"Can't use that folder: {why}.")
+        else:
+            self.say(f"Using your own platform-tools: {metroid.FASTBOOT}\n", "good")
 
     def check_gapps_zips(self):
         """Hash the zips in 3-GAPPS in the background (first time can take a minute; cached after)."""

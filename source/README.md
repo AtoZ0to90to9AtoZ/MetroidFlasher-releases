@@ -23,8 +23,11 @@ Put your files next to `MetroidFlasher.exe`, in the numbered folders. Only fill 
 | `3-GAPPS\` | The NikGapps or MindTheGapps zip(s) for the package you want (see below). Any file name: the tool finds them by checksum. |
 | `4-BACKUPS\` | Leave empty for now. |
 
-**platform-tools** (adb and fastboot) are not in the download. On first run the tool downloads them from
-Google, a fixed version (r37.0.1) checked against its SHA-256. Nothing else is downloaded.
+**platform-tools** (adb and fastboot) are not in the download. If you already have them (on PATH, in the
+Android SDK, or in `C:\platform-tools` / `C:\Android\platform-tools`), the tool uses yours when its fastboot is
+34.0.0 or newer. You can also pick the folder on the **Tools** tab ("Use my own platform-tools folder").
+Otherwise it downloads them from Google on first run: a fixed version (r37.0.1) checked against its SHA-256.
+Nothing else is downloaded.
 
 ## Google apps packages
 

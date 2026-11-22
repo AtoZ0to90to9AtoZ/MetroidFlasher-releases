@@ -1,3 +1,16 @@
+**MetroidFlasher 1.0.1 - Nothing Phone (3) "metroid" only.**
+
+## New in 1.0.1
+- **Uses your own adb + fastboot if you have them.** Found by itself on PATH, in the Android SDK or the usual
+  folders (`C:\platform-tools`, `C:\Android\platform-tools`, ...), or pick the folder on the Tools tab. Your
+  fastboot must be 34.0.0 or newer (older ones have trouble with big partitions like super); otherwise Google's
+  is downloaded like in 1.0.
+- Root wording: `init_boot.img` (Magisk, KernelSU LKM) is the usual and tested way on this phone; `boot.img`
+  (APatch, KernelSU GKI mode) is accepted but untested.
+- "Known quirks" are now plain tips. "(BETA)" is gone from the log window.
+
+---
+
 **MetroidFlasher 1.0 - Nothing Phone (3) "metroid" only. Every job erases the phone unless "keep data" is allowed (see below). Back up first.**
 
 ## New in 1.0 (since 0.7.1-beta)

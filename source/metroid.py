@@ -12,6 +12,7 @@ import hashlib
 import io
 import json
 import os
+import re
 import subprocess
 import sys
 import time
@@ -22,7 +23,7 @@ import debloatzip
 import gapps
 import metroid_flasher
 
-APP_VERSION = "1.0"
+APP_VERSION = "1.0.1"
 TITLE = f"MetroidFlasher {APP_VERSION}  -  Nothing Phone (3)"
 
 try:
@@ -115,11 +116,95 @@ PT_SHA256 = "45f4d63113e895ebde0c90f194099a4676b6ac653bd28d54314a9e022bbc1a99"
 PT_LATEST = "https://dl.google.com/android/repository/platform-tools-latest-windows.zip"
 
 
+# Most people already have platform-tools. If theirs is new enough it's used and nothing is downloaded (one adb
+# version on the PC also means no "adb server version doesn't match" fights). Older fastboot builds have known
+# trouble with big partitions, so anything older than MIN_FASTBOOT is skipped and Google's copy is downloaded.
+MIN_FASTBOOT = (34, 0, 0)
+OWN_PT_FILE = os.path.join(WORK, "platform-tools-path.txt")
+
+
+def use_platform_tools(folder):
+    global FASTBOOT, ADB
+    FASTBOOT = os.path.join(folder, "fastboot" + EXE)
+    ADB = os.path.join(folder, "adb" + EXE)
+
+
+def fastboot_version(fastboot):
+    """(major, minor, patch) from 'fastboot --version', or None."""
+    try:
+        out = subprocess.run([fastboot, "--version"], capture_output=True, text=True, timeout=15,
+                             creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0)).stdout
+        m = re.search(r"fastboot version (\d+)\.(\d+)\.(\d+)", out)
+        return tuple(int(x) for x in m.groups()) if m else None
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def check_platform_tools(folder):
+    """'' when folder holds a usable adb + fastboot, else the reason it can't be used."""
+    fb, adb = os.path.join(folder, "fastboot" + EXE), os.path.join(folder, "adb" + EXE)
+    if not (os.path.isfile(fb) and os.path.isfile(adb)):
+        return "no adb.exe + fastboot.exe in that folder"
+    v = fastboot_version(fb)
+    if v is None:
+        return "fastboot there doesn't run"
+    if v < MIN_FASTBOOT:
+        return f"fastboot {'.'.join(map(str, v))} is too old (needs {'.'.join(map(str, MIN_FASTBOOT))} or newer)"
+    return ""
+
+
+def own_platform_tools_candidates():
+    import shutil
+    out = []
+    try:
+        out.append(open(OWN_PT_FILE, encoding="utf-8").read().strip())
+    except OSError:
+        pass
+    w = shutil.which("fastboot")
+    if w:
+        out.append(os.path.dirname(os.path.realpath(w)))
+    env = os.environ
+    for base in (env.get("ANDROID_HOME"), env.get("ANDROID_SDK_ROOT"),
+                 os.path.join(env.get("LOCALAPPDATA", ""), "Android", "Sdk")):
+        if base:
+            out.append(os.path.join(base, "platform-tools"))
+    out += [r"C:\platform-tools", r"C:\Android\platform-tools", r"C:\adb",
+            os.path.join(env.get("USERPROFILE", ""), "platform-tools"),
+            os.path.join(env.get("USERPROFILE", ""), "Downloads", "platform-tools")]
+    seen, res = set(), []
+    for d in out:
+        k = os.path.normcase(os.path.abspath(d)) if d else ""
+        if k and k not in seen:
+            seen.add(k)
+            res.append(d)
+    return res
+
+
+def set_own_platform_tools(folder):
+    """Use (and remember) the user's own platform-tools folder. Returns '' or the reason it can't be used."""
+    why = check_platform_tools(folder)
+    if why:
+        return why
+    use_platform_tools(folder)
+    os.makedirs(WORK, exist_ok=True)
+    with open(OWN_PT_FILE, "w", encoding="utf-8") as f:
+        f.write(folder)
+    return ""
+
+
 def ensure_platform_tools(log=None):
-    """Make sure tool\\platform-tools has fastboot + adb. Returns True when they are there."""
+    """Make sure there's a usable fastboot + adb: tool\\platform-tools, else the user's own (PATH, SDK, the usual
+    folders), else Google's download. Returns True when they are there."""
     log = log or say
     if os.path.isfile(FASTBOOT) and os.path.isfile(ADB):
         return True
+    for d in own_platform_tools_candidates():
+        if os.path.isdir(d) and not check_platform_tools(d):
+            use_platform_tools(d)
+            v = fastboot_version(FASTBOOT)
+            log(f"Using your own platform-tools: {d} (fastboot {'.'.join(map(str, v))}). Nothing to download.")
+            return True
+    use_platform_tools(os.path.join(D_TOOL, "platform-tools"))
     import shutil
     import tempfile
     import urllib.request
