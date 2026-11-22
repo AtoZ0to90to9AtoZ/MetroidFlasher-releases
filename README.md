@@ -4,7 +4,7 @@
 
 **[MetroidFlasher 1.0.2 (zip, Windows, 12 MB)](https://github.com/AtoZ0to90to9AtoZ/MetroidFlasher-releases/releases/download/v1.0.2/MetroidFlasher-1.0.2.zip)**
 · [release page](https://github.com/AtoZ0to90to9AtoZ/MetroidFlasher-releases/releases/tag/v1.0.2)
-· [XDA thread (support and reports)](https://xdaforums.com/t/tool-unbrick-autoflash-beta-metroidflasher-unbrick-custom-rom-gapps-from-the-plain-bootloader.4808789/)
+· [XDA thread (support and reports)](https://xdaforums.com/t/oneclick-unbrick-flash-1-0-2-metroidflasher-unbrick-custom-roms-gapps-from-only-the-bootloader.4808789/)
 
 | File | SHA-256 |
 |---|---|
