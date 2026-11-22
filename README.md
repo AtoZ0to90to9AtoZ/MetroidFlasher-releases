@@ -20,6 +20,9 @@ It does three jobs:
 - **Install a ROM with Google apps built in.** The Google apps are baked into the ROM's images on your PC
   before anything is sent to the phone. No recovery, no sideloading, no taps on the phone during the flash.
 
+Optional with either ROM job: **flash your own pre-rooted image** (Magisk / KernelSU `init_boot.img`) in the
+same run, so the phone boots rooted. The tool checks it matches the ROM and never patches anything itself.
+
 > **Every job erases the phone** unless you use "keep data" exactly as described below. Back up first.
 > Needs an unlocked bootloader. Unbricking to stock also needs critical partitions unlocked.
 
@@ -71,7 +74,8 @@ the ROM (Android version and security patch) and refuses one that doesn't. Your 
 1. Fill the folders you need.
 2. Phone: power off, hold **Power + Volume Down** to reach the bootloader, then plug in USB.
 3. Double-click `MetroidFlasher.exe`. The top line shows when it sees the phone.
-4. Pick the job. For Google apps: pick the package, and optionally Customize and Root.
+4. Pick the job. For Google apps: pick the package, and optionally Customize. For root (either ROM job): pick
+   your pre-rooted image with the Root option (it can be in any folder).
 5. **Run a dry run first** (it's ticked by default). It checks the phone, your files, the bake and that
    everything fits, prints the full plan, and flashes nothing. The real flash only unlocks after a dry run of the
    same files passes.
