@@ -47,7 +47,8 @@ aren't in the package (get extras from the Play Store). When you leave a Google 
 that job stays.
 
 ### Root (optional)
-You can give the tool **your own pre-rooted `init_boot.img` or `boot.img`** (Magisk, KernelSU or APatch). It
+You can give the tool **your own pre-rooted `init_boot.img`** (Magisk, KernelSU LKM: the usual way on this phone,
+and the one tested) **or `boot.img`** (APatch, KernelSU GKI mode: accepted, untested on metroid). It
 must be made **from this exact ROM**. The tool doesn't patch anything itself. It checks that your image matches
 the ROM (Android version and security patch) and refuses one that doesn't. Your image replaces the ROM's own.
 

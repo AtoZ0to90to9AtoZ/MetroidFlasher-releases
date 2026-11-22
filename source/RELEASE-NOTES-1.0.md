@@ -24,8 +24,9 @@
 ### Customize and Root
 - **Customize...**: untick apps from the package you picked. Remove only. The ROM's own app stays for anything
   you leave out.
-- **Root (optional)**: bring your own pre-rooted `init_boot.img` / `boot.img` (Magisk, KernelSU, APatch) made from
-  the same ROM. The dry run checks that it matches the ROM. The tool never patches anything itself.
+- **Root (optional)**: bring your own pre-rooted image made from the same ROM: `init_boot.img` for Magisk and
+  KernelSU (LKM), the usual way on this phone and the one tested (KernelSU Next). `boot.img` (APatch, KernelSU GKI
+  mode) is accepted too but untested on metroid. The dry run checks that it matches the ROM. The tool never patches anything itself.
 
 ### Safer data handling
 - **Keep data only when nothing changed:** same ROM, same package, same Customize choices. Otherwise the data
