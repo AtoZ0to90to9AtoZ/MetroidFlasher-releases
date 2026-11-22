@@ -1,4 +1,4 @@
-# MetroidFlasher 1.0
+# MetroidFlasher
 
 A Windows flasher for the **Nothing Phone (3)** ("metroid", fastboot product `sun`). It works from the plain
 bootloader screen, so it still works when recovery and fastbootd are broken.
