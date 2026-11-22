@@ -59,7 +59,6 @@
   catalog, root-image checks and the keep-data rule.
 
 ### Tips
-- If Windows doesn't see the phone after it reboots, unplug and replug the cable (a USB port on the PC, not a hub).
 - After a wipe you'll need to tap **Allow** for USB debugging again.
 
 SHA-256 of the zip: `[fill in]`

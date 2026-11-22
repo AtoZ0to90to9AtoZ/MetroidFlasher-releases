@@ -110,8 +110,6 @@ If a flash stops partway, the tool tells you where. Nothing after that point was
 the bootloader. Fix the cause and run it again.
 
 ## Tips
-- **The phone doesn't show up after a reboot?** Unplug and replug the cable. Use a USB port directly on the PC,
-  not a hub.
 - After a wipe, Android asks you to **Allow USB debugging** for this PC again.
 - Mobile data may start switched off after a wipe. Turn it on in Settings.
 
