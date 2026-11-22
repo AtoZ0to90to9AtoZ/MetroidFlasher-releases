@@ -1,0 +1,12 @@
+# temporary / generated
+work/
+_history/
+__pycache__/
+*.pyc
+*.log
+tests/**/__pycache__/
+# big or private data
+data/*/manifests-merged-OLD.json
+*.img
+*.zip
+*.exe

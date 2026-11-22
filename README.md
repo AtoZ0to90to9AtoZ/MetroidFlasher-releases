@@ -1,47 +1,36 @@
 # MetroidFlasher
 
-Bootloader-only flashing tool for the **Nothing Phone (3)** (`metroid`) on Windows.
+Windows flasher for the **Nothing Phone (3)** (`metroid`). It works from the plain bootloader screen: no
+fastbootd or working recovery needed, which are exactly the parts that break when this phone gets stuck.
 
-Flashes stock Nothing OS, custom ROMs, and ROM + GApps **from the plain bootloader** —
-no fastbootd or working recovery needed. It writes the dynamic `super` partition piece by
-piece straight from the bootloader, so it can also bring back a phone that only boots to
-the bootloader.
+## Download
 
-## ⬇️ Download
+**[MetroidFlasher 1.0 (zip, Windows, 12 MB)](https://github.com/AtoZ0to90to9AtoZ/MetroidFlasher-releases/releases/download/v1.0/MetroidFlasher-1.0.zip)**
 
-**[MetroidFlasher 0.2.0 beta — download the zip](https://github.com/AtoZ0to90to9AtoZ/MetroidFlasher-releases/releases/download/v0.2.0-beta/MetroidFlasher-0.2.0-beta.zip)** (19 MB, Windows)
+SHA-256: `fc6a20f71eb81ebd13e3b756f48d59f76f9901b68325298e181b11e7ebc53576`
 
-SHA-256: `64936f097a61f03c16f14de127b77c9d5284494465082baee28c3a943f065df1`
+Release page: [v1.0](https://github.com/AtoZ0to90to9AtoZ/MetroidFlasher-releases/releases/tag/v1.0) ·
+Support and reports: [XDA thread](https://xdaforums.com/t/tool-unbrick-autoflash-beta-metroidflasher-unbrick-custom-rom-gapps-from-the-plain-bootloader.4808789/)
 
-💬 **Support, questions and test reports:** [XDA thread](https://xdaforums.com/t/tool-unbrick-autoflash-beta-metroidflasher-unbrick-custom-rom-gapps-from-the-plain-bootloader.4808789/)
+## What it does
 
-Release page: [v0.2.0-beta](https://github.com/AtoZ0to90to9AtoZ/MetroidFlasher-releases/releases/tag/v0.2.0-beta)
+- **Unbrick** to stock Nothing OS
+- **Install a custom ROM** (tested with crDroid 13.0, Android 17)
+- **Install a ROM with Google apps built in**: the apps are baked into the ROM's images on your PC, then
+  flashed in one go. No recovery step, nothing to tap on the phone.
+  - Packages: **Core** (Play only), **Basic** (+ Dialer, Contacts, Messages, Clock), **Omni**, **Stock**
+    (the most that fits) and **MindTheGapps**. All five were flashed and booted on a real phone.
+  - **Customize**: untick apps you don't want. **Root (optional)**: bring your own patched init_boot/boot.
+- Dry run first for every job. adb and fastboot are downloaded from Google on first run (pinned version,
+  checksum checked).
 
-## Status
+Every job erases the phone unless keep data is allowed. Back up first. Needs an unlocked bootloader.
 
-**Beta.** Downloads only from this repo's Releases.
-Do not use re-uploads or modified copies: the tool checks its own files and refuses to
-flash if they were changed.
+## Source
 
-## What it does (v0.2.0 beta)
+The source is in [`source/`](source) (Python, no outside packages) and as `MetroidFlasher-1.0-source.zip`
+on the release page. Run it with `py gui.py`; tests: `py tests/run_tests.py`.
+It's **source-available** (see [LICENSE.txt](LICENSE.txt)): read it, build it, change it for your own use,
+send fixes back. Please don't publish modified builds or present them as MetroidFlasher.
 
-1. Unbrick / install stock Nothing OS
-2. Flash a custom ROM
-3. Flash ROM + GApps (NikGapps basic or omni, or MindTheGapps) — removes the ROM apps
-   your GApps duplicate before first boot, handles verity and the wipe
-4. Check your downloaded files (SHA-256)
-
-Every option offers a dry run first.
-
-## Tested on a real phone
-
-- Stock Nothing OS install, and rescue from erased recovery + super
-- crDroid v13.0 (Android 17)
-- crDroid + NikGapps omni and crDroid + MindTheGapps (dual SIM / eSIM working)
-
-## Testers wanted
-
-Brick testers and custom-ROM flashers. Report your ROM, GApps, region/firmware, what
-happened, and the log from `tool\work\flash_*.log` in an issue.
-
-**You flash at your own risk. Not affiliated with Nothing.**
+Not affiliated with Nothing Technology Limited.
