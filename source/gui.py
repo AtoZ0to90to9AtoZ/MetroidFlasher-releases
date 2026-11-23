@@ -6,7 +6,7 @@ with metroid.GUI = True so the jobs never wait for keyboard input; this window a
 questions first (dry run first, then a typed FLASH confirmation).
 
 Folder layout is the same as the menu version (next to the exe):
-  1-STOCK  2-ROM  3-GAPPS  4-BACKUPS  tool\platform-tools (downloaded on first run)
+  1-STOCK  2-ROM (ROM .zip or .img files)  3-GAPPS  4-BACKUPS  tool\platform-tools + payload-dumper-go (downloaded when needed)
 """
 import contextlib
 import io
@@ -291,7 +291,7 @@ class App(tk.Tk):
         self.inputs = {}
         jobs = [
             ("unbrick", "Unbrick to stock Nothing OS", metroid.D_STOCK, "1-STOCK: the stock image folder (.img files)"),
-            ("rom", "Install a custom ROM", metroid.D_ROM, "2-ROM: the ROM's .img files"),
+            ("rom", "Install a custom ROM", metroid.D_ROM, "2-ROM: the ROM .zip as downloaded, or its .img files"),
             ("romgapps", "Install ROM + Google apps", metroid.D_GAPPS, "2-ROM + 3-GAPPS (NikGapps or MindTheGapps zips)"),
         ]
         self.gapps_var = tk.StringVar(value="Omni")
@@ -617,21 +617,25 @@ class App(tk.Tk):
 
     def refresh_inputs(self):
         stock = metroid.find_images(metroid.D_STOCK)
-        rom = metroid.find_images(metroid.D_ROM)
+        rom = metroid.rom_input()
         pkg = self.gapps_var.get().lower()
         ok_g = [pkg] if self.gapps_have and self.gapps_have.get(pkg) else []
 
         def n_img(d):
-            return len([x for x in os.listdir(d) if x.lower().endswith(".img")]) if d else 0
+            return len([x for x in os.listdir(d) if x.lower().endswith(".img")]) if d and os.path.isdir(d) else 0
+
+        rom_zip = bool(rom) and rom.lower().endswith(".zip")
 
         self.inputs["unbrick"].config(
             text=f"{self.short('stock')}: {n_img(stock)} images found" if stock else f"{self.short('stock')} has no .img files: put the stock images there or Choose folder.",
             style="Sub.TLabel" if stock else "Bad.TLabel")
         self.inputs["rom"].config(
-            text=f"{self.short('rom')}: {n_img(rom)} images found" if rom else f"{self.short('rom')} has no .img files: put the ROM's images there or Choose folder.",
+            text=(f"{self.short('rom')}: ROM zip {os.path.basename(rom)} (its images are unpacked when you flash)" if rom_zip
+                  else f"{self.short('rom')}: {n_img(rom)} images found" if rom
+                  else f"{self.short('rom')} is empty: put the ROM .zip (as downloaded) or its .img files there, or Choose folder."),
             style="Sub.TLabel" if rom else "Bad.TLabel")
         if not rom:
-            g = "No ROM images yet (see the row above)."
+            g = "No ROM yet (see the row above)."
         elif self.gapps_have is None:
             g = f"Checking the GApps zips in {self.short('gapps')}..."
         elif not ok_g:

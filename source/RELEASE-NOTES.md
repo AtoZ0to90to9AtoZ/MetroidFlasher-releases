@@ -1,4 +1,16 @@
-**MetroidFlasher 1.0.2 - Nothing Phone (3) "metroid" only.**
+**MetroidFlasher 1.1.0 - Nothing Phone (3) "metroid" only.**
+
+## New in 1.1.0 (since 1.0.2)
+- **Drop the ROM .zip straight in.** Put the custom ROM's .zip into 2-ROM exactly as you downloaded it (the kind
+  with payload.bin inside) - no unzipping or payload dumping on your side. Works for "Install a custom ROM" and
+  "Install ROM + Google apps". A folder of .img files still works too.
+- The zip is unpacked by **payload-dumper-go 2.1.0** (ssut, Apache-2.0). It is NOT shipped: the first time you
+  flash a zip it is downloaded from its official GitHub release and checked by SHA-256 (pinned version; if the
+  check fails nothing is used). Same idea as Google's platform-tools.
+- The zip's SHA-256 is recorded with every unpacked image, so images from a different zip are never reused.
+- Tested: crDroid 13.0 (Android 17) flashed from its downloaded zip onto a Nothing Phone (3), booted to setup.
+
+---
 
 ## New in 1.0.2 (since 1.0.1)
 - **Only ever your Nothing Phone (3).** The phone status panel and every Tools / command-box command now lock

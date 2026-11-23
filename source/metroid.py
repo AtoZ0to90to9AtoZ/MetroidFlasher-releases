@@ -23,7 +23,7 @@ import debloatzip
 import gapps
 import metroid_flasher
 
-APP_VERSION = "1.0.2"
+APP_VERSION = "1.1.0"
 TITLE = f"MetroidFlasher {APP_VERSION}  -  Nothing Phone (3)"
 
 try:
@@ -288,6 +288,57 @@ def ensure_platform_tools(log=None):
     return False
 
 
+# payload-dumper-go (ssut, Apache-2.0) for ROM .zips: NOT shipped, downloaded on first use from its official
+# GitHub release, pinned to one version and checked by SHA-256 (same idea as platform-tools). No "latest" fallback:
+# a different extractor could produce different images, so a mismatch stops instead.
+PDG_URL = ("https://github.com/ssut/payload-dumper-go/releases/download/2.1.0/"
+           "payload-dumper-go_2.1.0_windows_amd64.tar.gz")
+PDG_SHA256 = "45483c54bdd9219b8dcdb757256e7ce7a2bf9552d0e43f32e03389a1f0c55b15"
+PDG = os.path.join(D_TOOL, "payload-dumper-go" + EXE)
+
+
+def ensure_payload_dumper(log=None):
+    """payload-dumper-go.exe in the tool folder, downloaded and checked on first use. Returns True when it's there."""
+    log = log or say
+    if os.path.isfile(PDG):
+        return True
+    import shutil
+    import tarfile
+    import tempfile
+    import urllib.request
+    os.makedirs(D_TOOL, exist_ok=True)
+    tmp = None
+    try:
+        log(f"Downloading payload-dumper-go 2.1.0 (reads ROM .zips) from {PDG_URL} ...")
+        fd, tmp = tempfile.mkstemp(suffix=".tar.gz", dir=D_TOOL)
+        os.close(fd)
+        with urllib.request.urlopen(PDG_URL, timeout=60) as r, open(tmp, "wb") as f:
+            shutil.copyfileobj(r, f)
+        if sha256(tmp) != PDG_SHA256:
+            log("!! The downloaded payload-dumper-go does not match the expected checksum - not used.")
+            return False
+        with tarfile.open(tmp, "r:gz") as t:
+            m = next((x for x in t.getmembers() if x.isfile()
+                      and os.path.basename(x.name).lower() == "payload-dumper-go" + EXE), None)
+            if m is None:
+                log("!! payload-dumper-go was not inside the download.")
+                return False
+            with t.extractfile(m) as src, open(PDG, "wb") as dst:
+                shutil.copyfileobj(src, dst)
+        log(f"   payload-dumper-go ready in {D_TOOL}")
+        return True
+    except Exception as e:  # noqa: BLE001
+        log(f"!! Could not get payload-dumper-go: {e}. Check the internet connection, or unzip the ROM's "
+            "images yourself into 2-ROM.")
+        return False
+    finally:
+        if tmp:
+            try:
+                os.remove(tmp)
+            except Exception:  # noqa: BLE001
+                pass
+
+
 def check_tool_integrity():
     """Refuse to flash with modified or missing helper programs (our own files; platform-tools are
     Google's, downloaded and checked by ensure_platform_tools)."""
@@ -405,6 +456,9 @@ def flasher(args):
         argv.append("--yes")  # the GUI already got a typed FLASH confirmation
     old = sys.argv
     sys.argv = argv
+    # payload-dumper-go.exe (for ROM .zips) ships in tool\, next to platform-tools
+    if D_TOOL not in os.environ.get("PATH", ""):
+        os.environ["PATH"] = D_TOOL + os.pathsep + os.environ.get("PATH", "")
     try:
         return metroid_flasher.main()
     finally:
@@ -441,14 +495,36 @@ def job_unbrick():
 
 
 def rom_source():
-    # Beta: image folders only (ROM .zip extraction is not proven on a phone yet).
-    return find_images(D_ROM)
+    """2-ROM holds either the ROM's .img files, or the ROM .zip itself (payload.bin inside: the flasher extracts it
+    with payload-dumper-go, checking the zip's SHA-256 so images from another zip are never reused)."""
+    src = rom_input()
+    if src and src.lower().endswith(".zip") and not ensure_payload_dumper():
+        return None
+    return src
+
+
+def rom_input():
+    """What 2-ROM holds, without downloading anything: its .img folder, or the ONE ROM .zip (payload.bin inside)."""
+    imgs = find_images(D_ROM)
+    if imgs:
+        return imgs
+    zips = [z for z in find_zips(D_ROM) if is_payload_zip(z)]
+    return zips[0] if len(zips) == 1 else None
+
+
+def is_payload_zip(path):
+    import zipfile
+    try:
+        with zipfile.ZipFile(path) as z:
+            return "payload.bin" in z.namelist()
+    except (OSError, zipfile.BadZipFile):
+        return False
 
 
 def job_custom_rom():
     src = rom_source()
     if not src:
-        say("\nPut ONE custom ROM into 2-ROM as .img files (ROM .zip support comes in the next version).")
+        say("\nPut ONE custom ROM into 2-ROM: the ROM .zip as you downloaded it, or its .img files.")
         return pause()
     warnings_block(["CUSTOM ROM: installs the ROM in 2-ROM from the bootloader.",
                     "ERASES everything on the phone. Back up first.",
@@ -486,9 +562,9 @@ def root_args():
 
 
 def job_rom_gapps():
-    rom = find_images(D_ROM)
+    rom = rom_source()                       # .img files or the ROM .zip
     if not rom:
-        say("ROM + GApps needs the ROM as .img files in 2-ROM.")
+        say("ROM + GApps needs the ROM in 2-ROM: its .zip as downloaded, or its .img files.")
         return pause()
     have, _ = available_gapps()
     if not have.get(GUI_GAPPS):

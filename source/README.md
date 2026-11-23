@@ -24,7 +24,7 @@ themselves.
 | Folder | What goes in it |
 |---|---|
 | `1-STOCK\` | The Nothing OS stock image folder (all the `.img` files). Used by **Unbrick**. |
-| `2-ROM\` | One custom ROM as `.img` files. Used by **Install a custom ROM** and **ROM + Google apps**. |
+| `2-ROM\` | One custom ROM: its `.zip` exactly as downloaded (unpacked for you), or its `.img` files. Used by **Install a custom ROM** and **ROM + Google apps**. |
 | `3-GAPPS\` | The NikGapps or MindTheGapps zip(s) for the package you want (see below). Any file name: the tool finds them by checksum. |
 | `4-BACKUPS\` | Leave empty for now. |
 
