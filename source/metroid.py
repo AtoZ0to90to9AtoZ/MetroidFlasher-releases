@@ -23,7 +23,7 @@ import debloatzip
 import gapps
 import metroid_flasher
 
-APP_VERSION = "1.1.0"
+APP_VERSION = "1.1.1"
 TITLE = f"MetroidFlasher {APP_VERSION}  -  Nothing Phone (3)"
 
 try:
@@ -536,7 +536,7 @@ def job_custom_rom():
 
 
 # GApps are BAKED into the ROM's images on this PC (1.0): no recovery, no sideloads, no install scripts.
-# Packages: Core, Basic, Omni, Stock (Stock is the maximum), MindTheGapps. The zips go in 3-GAPPS (found by checksum).
+# Packages: Core or Basic + ONE setup wizard (Google or Pixel), Omni, Stock, MindTheGapps - nothing else added. The zips go in 3-GAPPS (found by checksum).
 GUI_GAPPS = "omni"          # set by gui.py
 GUI_CUSTOMIZE = []          # app packages to leave out (Customize)
 GUI_ROOT_IMAGE = ""         # optional pre-rooted init_boot/boot made from this ROM
@@ -544,8 +544,14 @@ GUI_ROOT_IMAGE = ""         # optional pre-rooted init_boot/boot made from this 
 
 def available_gapps():
     """{package: True/False} - which packages the zips in 3-GAPPS can build (cached by name/size/date)."""
-    zips = gapps.find_zips_cached(D_GAPPS, os.path.join(WORK, "gapps-cache.json"))
+    scan = gapps_scan()
+    zips = gapps.zips_from_scan(scan)
     return {p: all(k in zips for k, _ in gapps.PACKAGES[p]) for p in gapps.ORDER}, zips
+
+
+def gapps_scan():
+    """Every .zip in 3-GAPPS (path, what it is), hashed once and cached - for the used / not used list."""
+    return gapps.scan_zips(D_GAPPS, os.path.join(WORK, "gapps-scan.json"))
 
 
 def package_apps(package, zips):

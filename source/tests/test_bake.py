@@ -123,8 +123,54 @@ class CatalogTests(unittest.TestCase):
         self.assertEqual(gapps.specs_for("core", {"basic": "b.zip", "setupwizard": "s.zip"}),
                          ["b.zip::AppSet/Core/", "s.zip"])
 
+    def test_one_setup_wizard_only(self):
+        z = {"basic": "b.zip", "setupwizard": "s.zip", "pixelsetupwizard": "p.zip"}
+        self.assertEqual(gapps.specs_for("core-pixel", z), ["b.zip::AppSet/Core/", "p.zip"])
+        self.assertEqual(gapps.specs_for("basic-pixel", z), ["b.zip", "p.zip"])
+        self.assertEqual(gapps.specs_for("basic", z), ["b.zip", "s.zip"])
+        for pk in ("omni", "stock", "mindthegapps"):           # these stand alone: never an add-on
+            self.assertEqual(len(gapps.PACKAGES[pk]), 1)
+        for pk in ("core", "basic", "core-pixel", "basic-pixel"):  # exactly one wizard each
+            self.assertEqual(sum(k in ("setupwizard", "pixelsetupwizard") for k, _ in gapps.PACKAGES[pk]), 1)
+
+    def test_every_zip_gets_a_verdict(self):
+        scan = [("NikGapps-basic.zip", "basic"), ("NikGapps-Addon-17-PixelSetupWizard.zip", "pixelsetupwizard"),
+                ("NikGapps-Addon-17-SetupWizard.zip", "setupwizard"), ("NikGapps-Addon-17-Gmail.zip", None),
+                ("NikGapps-core-arm64.zip", None), ("random.zip", None)]
+        v = {f: (u, w) for f, u, w in gapps.zip_verdicts(scan, "basic-pixel")}
+        self.assertEqual(len(v), len(scan))
+        self.assertTrue(v["NikGapps-basic.zip"][0] and v["NikGapps-Addon-17-PixelSetupWizard.zip"][0])
+        self.assertFalse(v["NikGapps-Addon-17-SetupWizard.zip"][0])
+        self.assertIn("Sideload", v["NikGapps-Addon-17-Gmail.zip"][1])
+        self.assertIn("Core", v["NikGapps-core-arm64.zip"][1])
+        self.assertFalse(v["random.zip"][0])
+        # both wizards present + Basic: only Google's SetupWizard is used
+        v = {f: u for f, u, w in gapps.zip_verdicts(scan, "basic")}
+        self.assertTrue(v["NikGapps-Addon-17-SetupWizard.zip"])
+        self.assertFalse(v["NikGapps-Addon-17-PixelSetupWizard.zip"])
+        # Omni / Stock: everything else is ignored, wizards included
+        scan2 = scan + [("NikGapps-omni.zip", "omni"), ("NikGapps-stock.zip", "stock")]
+        for pk in ("omni", "stock"):
+            used = [f for f, u, w in gapps.zip_verdicts(scan2, pk) if u]
+            self.assertEqual(used, [f"NikGapps-{pk}.zip"])
+
+    def test_installer_android_version_branches(self):
+        import bakegapps
+        sh = "\n".join([
+            'if [ "$androidVersion" -ge 17 ]; then',
+            'set_prop "setupwizard.theme" "glif_expressive" "$product/etc/build.prop" "$p" "$t"',
+            'else',
+            'set_prop "setupwizard.theme" "glif_v3_light" "$product/etc/build.prop" "$p" "$t"',
+            'set_prop "old.only" "1" "$product/etc/build.prop" "$p" "$t"',
+            'fi',
+            'set_prop "always" "x" "$product/etc/build.prop" "$p" "$t"'])
+        self.assertEqual(bakegapps.installer_props(sh), [("setupwizard.theme", "glif_expressive"), ("always", "x")])
+        with self.assertRaises(SystemExit):
+            bakegapps.installer_props('if [ -f /x ]; then\nset_prop "a" "b" "$product/etc/build.prop"\nfi')
+
     def test_play_and_wizard_locked(self):
-        self.assertTrue({"GmsCore", "GooglePlayStore", "GoogleServicesFramework", "SetupWizard"} <= gapps.LOCKED)
+        self.assertTrue({"GmsCore", "GooglePlayStore", "GoogleServicesFramework", "SetupWizard",
+                         "SetupWizardPixel", "PixelSetupWizard"} <= gapps.LOCKED)
 
 
 def boot_img(path, kernel, osv_android=(17, 0), patch=(2026, 10)):

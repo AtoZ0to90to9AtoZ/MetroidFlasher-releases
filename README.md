@@ -2,14 +2,14 @@
 
 ## Download
 
-**[MetroidFlasher 1.1.0 (zip, Windows, 12 MB)](https://github.com/AtoZ0to90to9AtoZ/MetroidFlasher-releases/releases/download/v1.1.0/MetroidFlasher-1.1.0.zip)**
-· [release page](https://github.com/AtoZ0to90to9AtoZ/MetroidFlasher-releases/releases/tag/v1.1.0)
+**[MetroidFlasher 1.1.1 (zip, Windows, 12 MB)](https://github.com/AtoZ0to90to9AtoZ/MetroidFlasher-releases/releases/download/v1.1.1/MetroidFlasher-1.1.1.zip)**
+· [release page](https://github.com/AtoZ0to90to9AtoZ/MetroidFlasher-releases/releases/tag/v1.1.1)
 · [XDA thread (support and reports)](https://xdaforums.com/t/oneclick-unbrick-flash-1-0-2-metroidflasher-unbrick-custom-roms-gapps-from-only-the-bootloader.4808789/)
 
 | File | SHA-256 |
 |---|---|
-| `MetroidFlasher-1.1.0.zip` (the tool) | `eb0b671274043a1209de616856c3f06435cd58e6ea3ca2d4fdc2eb32214aac1f` |
-| `MetroidFlasher-1.1.0-source.zip` (the source) | `d9361df50b2f7402cb48c9763f56657a5e1dbcf6c1a1392b91d2446356cf1cc9` |
+| `MetroidFlasher-1.1.1.zip` (the tool) | `ed3203af3a2dbd839c6650e3d56d7f6e2531e0ed0f9373160249e6aba6b00f17` |
+| `MetroidFlasher-1.1.1-source.zip` (the source) | `1196253091578b60d16013a463380b120505e49d028352417ab6f99a3e126d6a` |
 
 A Windows flasher for the **Nothing Phone (3)** ("metroid", fastboot product `sun`). It works from the plain
 bootloader screen, so it still works when recovery and fastbootd are broken.
@@ -45,25 +45,79 @@ Android SDK, or in `C:\platform-tools` / `C:\Android\platform-tools`), the tool 
 Otherwise it downloads them from Google on first run: a fixed version (r37.0.1) checked against its SHA-256.
 Nothing else is downloaded.
 
-## Google apps packages
+## Google apps (GApps): how it works
 
-Pick one package. Every package brings Google's real Play Services and removes the ROM's microG pieces.
-Packages that bring Google's setup wizard get it automatically.
+### Baked in, not installed
+MetroidFlasher doesn't install GApps the usual way. There's no recovery, no sideload and no install script.
+On your PC it opens the ROM's own `system`, `system_ext` and `product` images, puts the Google apps inside them
+exactly where the GApps installer would, removes the ROM apps they replace, and builds one new super image.
+The phone gets **one flash** and boots straight into Google's setup.
 
-| Package | What you get | Zip(s) needed in `3-GAPPS` |
+Your zips are found by **checksum**, not by name, so a renamed or different download can never be baked by
+mistake. Each supported zip was mapped and test-flashed on a real Nothing Phone (3).
+
+### Pick ONE choice. These are the only ones:
+
+| Choice in the menu | What you get | Zips it uses from `3-GAPPS` |
 |---|---|---|
-| **Core** | Google Play only: Play Services, Play Store, Google setup wizard. The ROM keeps its own dialer, contacts, messages, clock, keyboard and launcher. | NikGapps **basic** + the **SetupWizard** add-on |
-| **Basic** | Core + Google Dialer, Contacts, Messages and Clock. The ROM's versions of those are removed. | NikGapps **basic** + the **SetupWizard** add-on |
-| **Omni** | The everyday Google set. | NikGapps **omni** |
-| **Stock** | The most Google apps that fit this phone (Pixel Launcher, Gboard and more). This is the maximum: nothing can be added on top. | NikGapps **stock** |
-| **MindTheGapps** | The MindTheGapps set: Play Services, Play Store, the Google app, contact/calendar sync, Digital Wellbeing, Android Auto, Speech Services, TalkBack. The ROM keeps its own dialer, messages, keyboard and launcher, and its own setup wizard runs before Google's (same as MindTheGapps on LineageOS). | **MindTheGapps-17.0.0-arm64-20261022_132445.zip** |
+| **Core** | Google Play only: Play Services, Play Store, Google's setup wizard. The ROM keeps its own dialer, contacts, messages, clock, keyboard and launcher. | NikGapps **basic** + **SetupWizard** add-on |
+| **Core + Pixel setup** | Core, with the Pixel setup wizard instead (Pixel welcome screens + Pixel restore). | NikGapps **basic** + **PixelSetupWizard** add-on |
+| **Basic** | Core + Google Dialer, Contacts, Messages and Clock (the ROM's versions are removed). | NikGapps **basic** + **SetupWizard** add-on |
+| **Basic + Pixel setup** | Basic, with the Pixel setup wizard instead. | NikGapps **basic** + **PixelSetupWizard** add-on |
+| **Omni** | The everyday Google set. Has its own setup wizard. | NikGapps **omni** (nothing else) |
+| **Stock** | The most Google apps that fit this phone (Pixel Launcher, Gboard and more). Has its own setup wizard. | NikGapps **stock** (nothing else) |
+| **MindTheGapps** | The MindTheGapps set. The ROM keeps its own dialer, messages, keyboard and launcher. | **MindTheGapps** (nothing else) |
 
-All four have been flashed and booted on a real Nothing Phone (3) with crDroid 13.0.
+The rule, in one line: **Core or Basic take exactly one setup wizard (Google's or Pixel's). Omni, Stock and
+MindTheGapps stand alone. Nothing else is ever added.**
 
-### Customize (optional)
-**Customize...** lets you untick apps from the package you picked. It only removes: you can't add apps that
-aren't in the package (get extras from the Play Store). When you leave a Google app out, the ROM's own app for
-that job stays.
+- Core and Basic have no setup wizard of their own, so they need one of the two wizard add-ons. If you have
+  **both** wizard zips in `3-GAPPS`, only the one your choice names is used. The other is ignored.
+- Omni, Stock and MindTheGapps ignore **every** other zip in the folder, the wizard add-ons included.
+
+Exact file names (any name works, these are just what the downloads are called):
+- `NikGapps-basic-arm64-17-20261110-signed.zip`
+- `NikGapps-Addon-17-SetupWizard-20261110-signed.zip`
+- `NikGapps-Addon-17-PixelSetupWizard-20261110-signed.zip`
+- `NikGapps-omni-arm64-17-20261110-signed.zip`
+- `NikGapps-stock-arm64-17-20261110-signed.zip`
+- `MindTheGapps-17.0.0-arm64-20261022_132445.zip`
+
+### Extra add-ons are never baked
+You can leave anything in `3-GAPPS`: Gmail, YouTube, Maps, PixelSpecifics, debloaters, older builds.
+**None of it is baked in.** The window lists every zip in the folder as **USED** or **not used**, with the
+reason, so nothing is silently skipped:
+
+```
+USED      NikGapps-basic-arm64-17-20261110-signed.zip
+USED      NikGapps-Addon-17-PixelSetupWizard-20261110-signed.zip
+not used  NikGapps-Addon-17-SetupWizard-20261110-signed.zip - not used by Basic + Pixel setup.
+not used  NikGapps-Addon-17-Gmail-20261110-signed.zip - add-ons aren't baked. Sideload it after the flash.
+```
+
+Want more Google apps? Get them from the **Play Store**, or **sideload** them yourself after the flash.
+
+**Why no add-ons?** Every extra app eats space in the phone's `super` partition (Stock already uses 8.8 of
+9.0 GB), add-ons can clash with each other or with the package, and every combination we ship has been
+flashed and booted on a real phone. Seven tested choices beat thousands of untested ones.
+
+### What gets removed from the ROM
+Only what the GApps replace:
+- Always: the ROM's microG pieces (Google's real Play Services goes in instead).
+- The ROM app a Google app replaces, as listed by that Google app's own installer. For example Google Dialer
+  replaces the ROM's Dialer, a Google setup wizard replaces the ROM's setup wizard.
+
+Anything the GApps don't replace stays: eSIM, core system apps, the ROM's own settings.
+
+### Customize (optional, remove only)
+**Customize...** lets you untick apps from the choice you picked. It **only removes**: you can't add apps that
+aren't in the package. When you leave a Google app out, the ROM's own app for that job stays. Play Services,
+Play Store and the setup wizard can't be unticked (the phone needs them).
+
+### Changing your mind later
+Keeping data (no wipe) only works when the ROM **and** the GApps choice are exactly the same as last time.
+Switching choices (say Basic to Stock) means a wiped flash: Google apps and the ROM apps they replaced live
+at different paths, and Android gets confused if you swap them under existing data.
 
 ### Root (optional)
 You can give the tool **your own pre-rooted `init_boot.img`** (Magisk, KernelSU LKM: the usual way on this phone,
@@ -132,9 +186,7 @@ checks its own files and refuses to flash with a modified copy.
 
 ## Source
 
-The source is in [`source/`](source) (Python, no outside packages) and as `MetroidFlasher-1.1.0-source.zip` on
+The source is in [`source/`](source) (Python, no outside packages) and as `MetroidFlasher-1.1.1-source.zip` on
 the release page. Run it with `py gui.py`; tests: `py tests/run_tests.py`.
 It's **source-available** (see [LICENSE.txt](LICENSE.txt)): read it, build it, change it for your own use, send
 fixes back. Please don't publish modified builds or present them as MetroidFlasher.
-
-Not affiliated with Nothing Technology Limited.

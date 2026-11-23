@@ -44,6 +44,8 @@ KNOWN_GAPPS = {
         "NikGapps-basic-arm64-17-20261110-signed.zip (Basic, and Core = its AppSet/Core/; built+verified 2026-11-21)",
     "ad6ed440431c9c0020e6a22eb21bd6458b3804116240830971a09a6c57688635":
         "NikGapps-Addon-17-SetupWizard-20261110-signed.zip (add-on for Core and Basic; built+verified 2026-11-21)",
+    "6a0fe590484796241c305fb6c94e2b249d1bce27c8112698c68e4f4131ca8a3b":
+        "NikGapps-Addon-17-PixelSetupWizard-20261110-signed.zip (the other setup wizard for Core and Basic; 2026-11-23)",
 }
 
 
@@ -92,6 +94,42 @@ def free_bytes(img):
     return get("Free blocks") * get("Block size")
 
 
+# Every NikGapps 17 zip targets Android 17, and so does every ROM MetroidFlasher bakes into.
+ANDROID_VERSION = 17
+_OPS = {"-ge": lambda a, b: a >= b, "-gt": lambda a, b: a > b, "-le": lambda a, b: a <= b,
+        "-lt": lambda a, b: a < b, "-eq": lambda a, b: a == b, "-ne": lambda a, b: a != b}
+
+
+def installer_props(sh, name="installer.sh"):
+    """The set_prop lines Nik's installer.sh would really run, as [(key, value)].
+    Follows `if [ "$androidVersion" -OP N ]; then / else / fi` the way the script does on Android 17
+    (SetupWizardPixel sets glif_expressive on 17+ and glif_v3_light below; taking both = crash, 2026-11-23).
+    A set_prop under any other kind of `if` stops the bake: it has to be looked at first."""
+    out, stack = [], []          # stack of True / False / None (None = condition we don't evaluate)
+    for line in sh.splitlines():
+        t = line.strip()
+        m = re.match(r'if \[ "?\$androidVersion"? (-ge|-gt|-le|-lt|-eq|-ne) "?(\d+)"? \]; then$', t)
+        if m:
+            stack.append(_OPS[m.group(1)](ANDROID_VERSION, int(m.group(2))))
+        elif re.match(r'if\b', t):
+            stack.append(None)
+        elif t == "else" and stack:
+            stack[-1] = None if stack[-1] is None else not stack[-1]
+        elif t.startswith("elif") and stack:
+            stack[-1] = None
+        elif t == "fi" and stack:
+            stack.pop()
+        else:
+            m = re.match(r'set_prop "([^"]+)" "([^"]*)" "\$product/etc/build.prop"', t)
+            if m:
+                if None in stack:
+                    raise SystemExit(f"{name}: set_prop {m.group(1)} sits under an installer condition "
+                                     "MetroidFlasher can't evaluate - not handled yet")
+                if all(stack):
+                    out.append((m.group(1), m.group(2)))
+    return out
+
+
 def read_packages(gapps_zip, only=None):
     """{pkg: {"partition": p, "files": {dest_rel: bytes}, "props": [(k, v)]}}
     only: keep just the app packages under this AppSet prefix (Core = Basic's "AppSet/Core/")."""
@@ -127,9 +165,7 @@ def read_packages(gapps_zip, only=None):
         # In recovery Nik's script sees partitions at /system/<part>; the text it writes says so (and
         # /system/product -> /product on a running phone), so write the same strings for a byte-identical result.
         mount = "/system/" + part
-        props = []
-        for k, v in re.findall(r'^\s*set_prop "([^"]+)" "([^"]*)" "\$product/etc/build.prop"', sh, re.M):
-            props.append((k, v.replace("$install_partition", mount)))
+        props = [(k, v.replace("$install_partition", mount)) for k, v in installer_props(sh, n)]
         # files the installer writes itself: script_text="..." then echo -e "$script_text" > $install_partition/...
         for body, target in re.findall(r'script_text="(.*?)"\s*\n\s*echo -e "\$script_text" > (\S+)', sh, re.S):
             text = body.replace('\\"', '"').replace("$install_partition", mount) + "\n"

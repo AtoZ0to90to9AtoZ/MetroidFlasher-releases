@@ -299,6 +299,7 @@ class App(tk.Tk):
         self.root_var = tk.StringVar(value="")
         self.gapps_have = None       # {package: bool} once the zips in 3-GAPPS are checked
         self.gapps_zips = {}
+        self.gapps_scan = []         # [(zip file, key or None)] - every zip in 3-GAPPS, for the used / not used list
         for key, label, folder, hint in jobs:
             box = ttk.Frame(f)
             box.pack(fill="x", pady=3)
@@ -319,13 +320,15 @@ class App(tk.Tk):
                 pick = ttk.Frame(box)
                 pick.pack(anchor="w", fill="x", pady=(4, 0))
                 ttk.Label(pick, text="Google apps:").pack(side="left")
-                cb = ttk.Combobox(pick, textvariable=self.gapps_var, state="readonly", width=13,
+                cb = ttk.Combobox(pick, textvariable=self.gapps_var, state="readonly", width=20,
                                   values=[gapps.NAMES[p] for p in gapps.ORDER])
                 cb.pack(side="left", padx=4)
-                cb.bind("<<ComboboxSelected>>", lambda e: self.refresh_inputs())
+                cb.bind("<<ComboboxSelected>>", lambda e: (self.refresh_inputs(), self.log_gapps_verdicts()))
                 ttk.Button(pick, text="Customize...", command=self.customize_dialog).pack(side="left", padx=4)
                 self.customize_label = ttk.Label(box, text="", style="Sub.TLabel", wraplength=320, justify="left")
                 self.customize_label.pack(anchor="w")
+                self.unused_label = ttk.Label(box, text="", style="Bad.TLabel", wraplength=320, justify="left")
+                self.unused_label.pack(anchor="w")
         ttk.Separator(f).pack(fill="x", pady=8)
         rb = ttk.Frame(f)
         rb.pack(fill="x")
@@ -548,12 +551,14 @@ class App(tk.Tk):
         def work():
             try:
                 have, zips = metroid.available_gapps()
+                scan = metroid.gapps_scan()      # cached: available_gapps just hashed them
             except Exception as e:  # noqa: BLE001
-                have, zips = {}, {}
+                have, zips, scan = {}, {}, []
                 self.q.put(("log", f"Could not check 3-GAPPS: {e}\n"))
             def done():
-                self.gapps_have, self.gapps_zips = have, zips
+                self.gapps_have, self.gapps_zips, self.gapps_scan = have, zips, scan
                 self.refresh_inputs()
+                self.log_gapps_verdicts()
             self.q.put(("call", done))
         self.gapps_have = None
         threading.Thread(target=work, daemon=True).start()
@@ -572,8 +577,21 @@ class App(tk.Tk):
                      f"The dry run checks it matches the ROM.\n")
             self.refresh_inputs()
 
+    def pkg(self):
+        return gapps.KEY_BY_NAME.get(self.gapps_var.get(), "omni")
+
+    def log_gapps_verdicts(self):
+        """Every zip in 3-GAPPS, used or not and why - nothing is silently ignored."""
+        if not self.gapps_scan:
+            return
+        self.say(f"3-GAPPS, for {gapps.NAMES[self.pkg()]}:\n")
+        for f, used, why in gapps.zip_verdicts(self.gapps_scan, self.pkg()):
+            self.say(f"  {'USED' if used else 'not used'}: {f}" + ("" if used else f" - {why}") + "\n",
+                     "good" if used else None)
+        self.say(gapps.RULE + "\n")
+
     def customize_dialog(self):
-        pkg = self.gapps_var.get().lower()
+        pkg = self.pkg()
         if not self.gapps_have or not self.gapps_have.get(pkg):
             messagebox.showinfo(TITLE, f"3-GAPPS doesn't hold the zips for {gapps.NAMES[pkg]} yet.")
             return
@@ -618,7 +636,7 @@ class App(tk.Tk):
     def refresh_inputs(self):
         stock = metroid.find_images(metroid.D_STOCK)
         rom = metroid.rom_input()
-        pkg = self.gapps_var.get().lower()
+        pkg = self.pkg()
         ok_g = [pkg] if self.gapps_have and self.gapps_have.get(pkg) else []
 
         def n_img(d):
@@ -651,11 +669,13 @@ class App(tk.Tk):
             what = gapps.WHAT[pkg]
             self.customize_label.config(text=f"{gapps.NAMES[pkg]}: {what}. " + (f"Leaving out: {', '.join(left)}" if left
                                         else "All its apps."))
+            junk = [f for f, used, why in gapps.zip_verdicts(self.gapps_scan) if not used]
+            self.unused_label.config(text=(f"{len(junk)} zip(s) not used, no add-ons baked (see log)." if junk else ""))
         return stock, rom, ok_g
 
     def signature(self, job):
         """What a dry run approved: job + files in its folders. A real flash needs a dry run of the same thing."""
-        pkg = self.gapps_var.get().lower()
+        pkg = self.pkg()
         parts = [job, pkg, ",".join(self.customize.get(pkg, [])), self.root_var.get()]
         for d in (metroid.D_STOCK, metroid.D_ROM, metroid.D_GAPPS):
             for dp, _dn, fn in os.walk(d):
@@ -691,7 +711,7 @@ class App(tk.Tk):
             if not self.confirm_flash(key):
                 return
         metroid.GUI_DRY = dry
-        pkg = self.gapps_var.get().lower()
+        pkg = self.pkg()
         metroid.GUI_GAPPS = pkg
         metroid.GUI_CUSTOMIZE = list(self.customize.get(pkg, []))
         metroid.GUI_ROOT_IMAGE = self.root_var.get() if key != "unbrick" else ""

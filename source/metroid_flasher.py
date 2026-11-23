@@ -27,7 +27,7 @@ import time
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import lpsuper  # noqa: E402
 
-TOOL_VERSION = "1.1.0"
+TOOL_VERSION = "1.1.1"
 EXPECTED_PRODUCT = "sun"
 DEFAULT_SUPER_SIZE = 0x240000000
 GROUP = "qti_dynamic_partitions"
@@ -419,7 +419,10 @@ def bake_gapps(paths, args, workdir, here, parent):
     if not os.path.isdir(gdir):
         raise FlashError(f"GApps folder not found: {gdir}. Put the NikGapps / MindTheGapps zips there or pass --gapps-dir.")
     log(f"Looking for GApps zips in {gdir} (checked by SHA-256) ...")
-    zips = gapps.find_zips(gdir, log)
+    scan = gapps.scan_zips(gdir, os.path.join(workdir, "gapps-scan.json"))
+    zips = gapps.zips_from_scan(scan)
+    for f, used, why in gapps.zip_verdicts(scan, args.gapps):
+        log(f"  {'USED    ' if used else '        '} {f}" + ("" if used else f"  - {why}"))
     try:
         specs = gapps.specs_for(args.gapps, zips)
         props = bakewin.build_props(paths["system"])
@@ -634,6 +637,7 @@ def main():
     global LOGFILE
     here = os.path.dirname(os.path.abspath(__file__))
     parent = os.path.dirname(here)
+    import gapps
     ap = argparse.ArgumentParser(description="Bootloader-only flasher for the Nothing Phone 3.")
     ap.add_argument("mode", choices=["stock", "rom"], help="stock = unbrick to Nothing OS, rom = custom ROM")
     ap.add_argument("source", help="stock: the NothingFlasher image folder. rom: the ROM .zip or a folder of .img files")
@@ -656,8 +660,9 @@ def main():
     ap.add_argument("--fastboot", help="path to fastboot.exe")
     ap.add_argument("--super-size", help="super size for --dry-run without a phone (hex), default 0x240000000")
     ap.add_argument("--yes", action="store_true", help="do not ask for confirmation")
-    ap.add_argument("--gapps", choices=["core", "basic", "omni", "stock", "mindthegapps"],
-                    help="bake Google apps into the ROM's images on this PC (rom mode). Stock is the maximum")
+    ap.add_argument("--gapps", choices=gapps.ORDER,
+                    help="bake Google apps into the ROM's images on this PC (rom mode). Core/Basic come with ONE "
+                         "setup wizard (-pixel = PixelSetupWizard); Omni, Stock, MindTheGapps alone. No other add-ons")
     ap.add_argument("--gapps-dir", help="folder holding the GApps zips (found by checksum, any file name)")
     ap.add_argument("--customize-remove", default="",
                     help="comma list of GApps app packages to leave out (their ROM counterparts stay)")

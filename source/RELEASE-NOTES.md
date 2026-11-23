@@ -1,4 +1,13 @@
-**MetroidFlasher 1.1.0 - Nothing Phone (3) "metroid" only.**
+**MetroidFlasher 1.1.1 - Nothing Phone (3) "metroid" only.**
+
+## New in 1.1.1 (since 1.1.0)
+- **GApps rules made plain.** The only combinations are: Core or Basic + ONE setup wizard (Google's SetupWizard
+  or PixelSetupWizard), Omni alone, Stock alone, MindTheGapps alone. No other add-ons are ever baked.
+- **New: Core + Pixel setup and Basic + Pixel setup** (needs the NikGapps PixelSetupWizard add-on zip).
+- **Every zip in 3-GAPPS is listed as used or not used, and why.** Before, extra add-ons were silently
+  ignored. Want more apps? Play Store, or sideload them yourself after the flash. Customize still only removes.
+
+---
 
 ## New in 1.1.0 (since 1.0.2)
 - **Drop the ROM .zip straight in.** Put the custom ROM's .zip into 2-ROM exactly as you downloaded it (the kind
