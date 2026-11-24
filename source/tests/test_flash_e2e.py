@@ -11,6 +11,7 @@ import unittest
 
 from helpers import BLK, FAKE_FASTBOOT, TOOL, make_workdir, remove, pattern, write_sparse
 import lpsuper
+from metroid_flasher import MAGIC as mf_magic
 
 MiB = 1024 * 1024
 SUPER_SIZE = 64 * MiB
@@ -56,6 +57,8 @@ class FakePhoneTest(unittest.TestCase):
 
     def _raw(self, name, size, seed):
         data = pattern(size, seed)
+        magic = mf_magic.get(name, b"")   # real boot/vbmeta images start with their magic (check_headers)
+        data = magic + data[len(magic):]
         with open(os.path.join(self.imgdir, name + ".img"), "wb") as f:
             f.write(data)
         return data

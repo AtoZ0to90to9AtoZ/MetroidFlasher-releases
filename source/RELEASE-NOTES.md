@@ -1,4 +1,13 @@
-**MetroidFlasher 1.1.1 - Nothing Phone (3) "metroid" only.**
+**MetroidFlasher 1.1.2 - Nothing Phone (3) "metroid" only.**
+
+## New in 1.1.2 (since 1.1.1)
+- **Broken images are caught before anything is flashed.** Every boot and vbmeta image (boot, init_boot,
+  recovery, pvmfw, vendor_boot, dtbo, vbmeta, vbmeta_system, vbmeta_vendor, and your own root image) is checked
+  on the PC for the header a real one starts with (vbmeta: AVB0, boot: ANDROID!, ...). A damaged or wrong file
+  now stops the run with its name and nothing on the phone is touched. Before, a bad vbmeta.img was only found
+  after super had already been flashed (reported on XDA, thanks diptenkrom).
+
+---
 
 ## New in 1.1.1 (since 1.1.0)
 - **GApps rules made plain.** The only combinations are: Core or Basic + ONE setup wizard (Google's SetupWizard

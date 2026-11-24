@@ -23,7 +23,7 @@ import debloatzip
 import gapps
 import metroid_flasher
 
-APP_VERSION = "1.1.1"
+APP_VERSION = "1.1.2"
 TITLE = f"MetroidFlasher {APP_VERSION}  -  Nothing Phone (3)"
 
 try:

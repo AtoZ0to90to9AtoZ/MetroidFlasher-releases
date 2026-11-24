@@ -27,7 +27,7 @@ import time
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import lpsuper  # noqa: E402
 
-TOOL_VERSION = "1.1.1"
+TOOL_VERSION = "1.1.2"
 EXPECTED_PRODUCT = "sun"
 DEFAULT_SUPER_SIZE = 0x240000000
 GROUP = "qti_dynamic_partitions"
@@ -384,6 +384,38 @@ def classify(images, mode, skip_firmware):
     return plan
 
 
+# What every real image of each kind starts with (checked on the crDroid 13.0 and stock B4.1 images,
+# 2026-11-23). A bad download or a failed payload extraction gets caught here, on the PC, before
+# anything is written to the phone (a bad vbmeta.img used to be found only after super was flashed).
+MAGIC = {
+    "boot": b"ANDROID!", "init_boot": b"ANDROID!", "recovery": b"ANDROID!", "pvmfw": b"ANDROID!",
+    "vendor_boot": b"VNDRBOOT", "dtbo": bytes.fromhex("d7b7ab1e"),
+    "vbmeta": b"AVB0", "vbmeta_system": b"AVB0", "vbmeta_vendor": b"AVB0",
+}
+
+
+def check_headers(plan, paths):
+    """Stop before touching the phone if a boot or vbmeta image isn't what its name says."""
+    bad = []
+    for name in plan["boot"]:
+        want = MAGIC.get(name)
+        if not want:
+            continue
+        p = paths[name]
+        size = os.path.getsize(p)
+        with open(p, "rb") as f:
+            head = f.read(len(want))
+        if head != want:
+            what = "it's empty" if size == 0 else (
+                "it's all zeros at the start" if not head.strip(b"\0") else f"it starts with {head.hex()}")
+            bad.append(f"  {os.path.basename(p)} ({size:,} bytes): not a real {name} image, {what} "
+                       f"(a real one starts with {want!r})")
+    if bad:
+        raise FlashError("These images are damaged or the wrong files. Nothing was flashed:\n" + "\n".join(bad) +
+                         "\nExtract them again from the same ROM / firmware zip (a failed payload.bin "
+                         "extraction or a partial download usually causes this), then run again.")
+
+
 # --------------------------------------------------------------------------- GApps bake, own root image
 
 def install_record(args, paths):
@@ -703,6 +735,7 @@ def main():
         if args.root_image:
             paths = swap_root_image(paths, args.root_image)
         plan = classify(paths, args.mode, args.skip_firmware)
+        check_headers(plan, paths)
         images = {n: Image(n, p) for n, p in paths.items()
                   if n in plan["logical"] or n in plan["boot"] or n in plan["firmware"]}
 

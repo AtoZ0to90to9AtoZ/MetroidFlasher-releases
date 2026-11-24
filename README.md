@@ -2,14 +2,14 @@
 
 ## Download
 
-**[MetroidFlasher 1.1.1 (zip, Windows, 12 MB)](https://github.com/AtoZ0to90to9AtoZ/MetroidFlasher-releases/releases/download/v1.1.1/MetroidFlasher-1.1.1.zip)**
-· [release page](https://github.com/AtoZ0to90to9AtoZ/MetroidFlasher-releases/releases/tag/v1.1.1)
+**[MetroidFlasher 1.1.2 (zip, Windows, 12 MB)](https://github.com/AtoZ0to90to9AtoZ/MetroidFlasher-releases/releases/download/v1.1.2/MetroidFlasher-1.1.2.zip)**
+· [release page](https://github.com/AtoZ0to90to9AtoZ/MetroidFlasher-releases/releases/tag/v1.1.2)
 · [XDA thread (support and reports)](https://xdaforums.com/t/oneclick-unbrick-flash-1-0-2-metroidflasher-unbrick-custom-roms-gapps-from-only-the-bootloader.4808789/)
 
 | File | SHA-256 |
 |---|---|
-| `MetroidFlasher-1.1.1.zip` (the tool) | `ed3203af3a2dbd839c6650e3d56d7f6e2531e0ed0f9373160249e6aba6b00f17` |
-| `MetroidFlasher-1.1.1-source.zip` (the source) | `1196253091578b60d16013a463380b120505e49d028352417ab6f99a3e126d6a` |
+| `MetroidFlasher-1.1.2.zip` (the tool) | `d940018afaade334e28b372deacb6cbe6e4e8d6a2962f4cd972fa6102f78ad28` |
+| `MetroidFlasher-1.1.2-source.zip` (the source) | `17c215c6f3f4070e58f72b5c6d17b1dfc0ead9d3ab8019a0038eb554bbe5d230` |
 
 A Windows flasher for the **Nothing Phone (3)** ("metroid", fastboot product `sun`). It works from the plain
 bootloader screen, so it still works when recovery and fastbootd are broken.
@@ -186,7 +186,7 @@ checks its own files and refuses to flash with a modified copy.
 
 ## Source
 
-The source is in [`source/`](source) (Python, no outside packages) and as `MetroidFlasher-1.1.1-source.zip` on
+The source is in [`source/`](source) (Python, no outside packages) and as `MetroidFlasher-1.1.2-source.zip` on
 the release page. Run it with `py gui.py`; tests: `py tests/run_tests.py`.
 It's **source-available** (see [LICENSE.txt](LICENSE.txt)): read it, build it, change it for your own use, send
 fixes back. Please don't publish modified builds or present them as MetroidFlasher.
